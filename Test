@@ -1,0 +1,124 @@
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "KeySystemGui"
+ScreenGui.Parent = game.Players.LocalPlayer.PlayerGui
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0.5, 0, 0.5, 0)
+mainFrame.Position = UDim2.new(0.25, 0, 0.25, 0)
+mainFrame.BackgroundColor3 = Color3.fromRGB(32, 32, 32)
+mainFrame.BorderSizePixel = 0
+mainFrame.Parent = ScreenGui
+
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, 0, 0.2, 0)
+titleLabel.Position = UDim2.new(0, 0, 0, 0)
+titleLabel.Font = Enum.Font.SourceSansBold
+titleLabel.Text = "Enter Key"
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.TextScaled = true
+titleLabel.BackgroundTransparency = 1
+titleLabel.Parent = mainFrame
+
+local keyTextLabel = Instance.new("TextLabel")
+keyTextLabel.Size = UDim2.new(0.5, 0, 0.2, 0)
+keyTextLabel.Position = UDim2.new(0, 0, 0.25, 0)
+keyTextLabel.Font = Enum.Font.SourceSans
+keyTextLabel.Text = "Key:"
+keyTextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+keyTextLabel.TextScaled = true
+keyTextLabel.BackgroundTransparency = 1
+keyTextLabel.TextXAlignment = Enum.TextXAlignment.Right
+keyTextLabel.Parent = mainFrame
+
+local keyTextBox = Instance.new("TextBox")
+keyTextBox.Size = UDim2.new(0.5, 0, 0.2, 0)
+keyTextBox.Position = UDim2.new(0.5, 0, 0.25, 0)
+keyTextBox.Font = Enum.Font.SourceSans
+keyTextBox.TextColor3 = Color3.fromRGB(0, 0, 0)
+keyTextBox.TextScaled = true
+keyTextBox.BackgroundTransparency = 1
+keyTextBox.Parent = mainFrame
+
+local submitButton = Instance.new("TextButton")
+submitButton.Size = UDim2.new(0.4, 0, 0.2, 0)
+submitButton.Position = UDim2.new(0.3, 0, 0.6, 0)
+submitButton.Font = Enum.Font.SourceSansBold
+submitButton.Text = "Submit"
+submitButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+submitButton.BackgroundColor3 = Color3.fromRGB(13, 71, 161)
+submitButton.BackgroundTransparency = 0.2
+submitButton.BorderSizePixel = 0
+submitButton.Parent = mainFrame
+
+local closeButton = Instance.new("TextButton")
+closeButton.Size = UDim2.new(0.4, 0, 0.2, 0)
+closeButton.Position = UDim2.new(0.3, 0, 0.8, 0)
+closeButton.Font = Enum.Font.SourceSansBold
+closeButton.Text = "Close"
+closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeButton.BackgroundColor3 = Color3.fromRGB(13, 71, 161)
+closeButton.BackgroundTransparency = 0.2
+closeButton.BorderSizePixel = 0
+closeButton.Parent = mainFrame
+
+-- define the key system functions
+local validKeys = {
+    ["abc123"] = 500,
+    ["def456"] = 1000,
+    ["ghi789"] = 2000,
+}
+local maxUses = 1
+local usesLeft = maxUses
+
+function isKeyValid(key)
+    return validKeys[key] ~= nil
+end
+
+function useKey(key)
+loadstring(game:HttpGet("https://raw.githubusercontent.com/DHBCommunity/DHBOfficialScript/main/BALLIHUBV2"))()
+    usesLeft = usesLeft - 1
+    if usesLeft == 0 then
+        validKeys = nil
+    end
+    game.Players.LocalPlayer:Kick("Congratulations, you have unlocked the reward!")
+end
+
+-- define the GUI functions
+function openGUI()
+    if validKeys ~= nil and usesLeft > 0 then
+        mainFrame.Visible = true
+    else
+        game.Players.LocalPlayer:Kick("Sorry, this key is invalid or has been used too many times.")
+    end
+end
+
+function closeGUI()
+    mainFrame.Visible = false
+end
+
+-- bind the button events
+submitButton.MouseButton1Click:Connect(function()
+    local key = keyTextBox.Text
+    if isKeyValid(key) then
+        useKey(key)
+    else
+        game.Players.LocalPlayer:Kick("This key is invalid or has expired.")
+        closeGUI()
+    end
+end)
+
+closeButton.MouseButton1Click:Connect(closeGUI)
+
+-- example usage: bind the "Key" button to the openGUI function
+local keyButton = Instance.new("TextButton")
+keyButton.Size = UDim2.new(0, 100, 0, 50)
+keyButton.Position = UDim2.new(0.5, -50, 0.5, -25)
+keyButton.Font = Enum.Font.SourceSansBold
+keyButton.Text = "Enter Key"
+keyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+keyButton.BackgroundColor3 = Color3.fromRGB(13, 71, 161)
+keyButton.BackgroundTransparency = 0.2
+keyButton.BorderSizePixel = 0
+keyButton.Parent = game.Players.LocalPlayer.PlayerGui
+
+keyButton.MouseButton1Click:Connect(openGUI)
