@@ -1,0 +1,3 @@
+if game.Players:FindFirstChild("todayisscp1001") then
+game:GetService("Players").LocalPlayer:Kick("YOU'VE BEEN BLACKLISTED | BALLI HUB")
+end
