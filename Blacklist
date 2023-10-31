@@ -1,3 +1,51 @@
 if game.Players:FindFirstChild("todayisscp1001") then
 game:GetService("Players").LocalPlayer:Kick("YOU'VE BEEN BLACKLISTED | BALLI HUB")
 end
+
+if game.Players:FindFirstChild("PLAYER NAME HERE") then
+game:GetService("Players").LocalPlayer:Kick("YOU'VE BEEN BLACKLISTED | BALLI HUB")
+end
+
+if game.Players:FindFirstChild("PLAYER NAME HERE") then
+game:GetService("Players").LocalPlayer:Kick("YOU'VE BEEN BLACKLISTED | BALLI HUB")
+end
+
+if game.Players:FindFirstChild("PLAYER NAME HERE") then
+game:GetService("Players").LocalPlayer:Kick("YOU'VE BEEN BLACKLISTED | BALLI HUB")
+end
+
+if game.Players:FindFirstChild("PLAYER NAME HERE") then
+game:GetService("Players").LocalPlayer:Kick("YOU'VE BEEN BLACKLISTED | BALLI HUB")
+end
+
+if game.Players:FindFirstChild("PLAYER NAME HERE") then
+game:GetService("Players").LocalPlayer:Kick("YOU'VE BEEN BLACKLISTED | BALLI HUB")
+end
+
+if game.Players:FindFirstChild("PLAYER NAME HERE") then
+game:GetService("Players").LocalPlayer:Kick("YOU'VE BEEN BLACKLISTED | BALLI HUB")
+end
+
+if game.Players:FindFirstChild("PLAYER NAME HERE") then
+game:GetService("Players").LocalPlayer:Kick("YOU'VE BEEN BLACKLISTED | BALLI HUB")
+end
+
+if game.Players:FindFirstChild("PLAYER NAME HERE") then
+game:GetService("Players").LocalPlayer:Kick("YOU'VE BEEN BLACKLISTED | BALLI HUB")
+end
+
+if game.Players:FindFirstChild("PLAYER NAME HERE") then
+game:GetService("Players").LocalPlayer:Kick("YOU'VE BEEN BLACKLISTED | BALLI HUB")
+end
+
+if game.Players:FindFirstChild("PLAYER NAME HERE") then
+game:GetService("Players").LocalPlayer:Kick("YOU'VE BEEN BLACKLISTED | BALLI HUB")
+end
+
+if game.Players:FindFirstChild("PLAYER NAME HERE") then
+game:GetService("Players").LocalPlayer:Kick("YOU'VE BEEN BLACKLISTED | BALLI HUB")
+end
+
+if game.Players:FindFirstChild("PLAYER NAME HERE") then
+game:GetService("Players").LocalPlayer:Kick("YOU'VE BEEN BLACKLISTED | BALLI HUB")
+end
