@@ -1,8 +1,8 @@
-local CoreGui = game:GetService("StarterGui")
-CoreGui:SetCore("SendNotification", {
-Title = "BALLI HUB V3",
-Text = "THIS SCRIPT IS OUTDATED CHECK OUT THE NEW ONE IN BALLIGUSAPO YT CHANNEL!",
-Duration = 10,
-Button1 = "OK",
-Button2 = "NO"
-})
+local Sound = Instance.new("Sound",game:GetService("SoundService"))
+Sound.SoundId = "rbxassetid://3398620867"
+Sound:Play()
+game:GetService("StarterGui"):SetCore("SendNotification", { 
+	Title = ("notification");
+	Text = "the script is currently outdated check the new script in Balligusapo YT";
+	Icon = "rbxthumb://type=Asset&id=33236091&w=150&h=150"})
+Duration = 16;
