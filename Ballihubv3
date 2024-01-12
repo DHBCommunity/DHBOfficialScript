@@ -3,6 +3,6 @@ Sound.SoundId = "rbxassetid://3398620867"
 Sound:Play()
 game:GetService("StarterGui"):SetCore("SendNotification", { 
 	Title = ("notification");
-	Text = "the script is currently outdated check the new script in Balligusapo YT";
+	Text = "the script is down for now";
 	Icon = "rbxthumb://type=Asset&id=33236091&w=150&h=150"})
 Duration = 16;
