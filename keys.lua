@@ -44,4 +44,5 @@ return {
     LICENSE43 = 20,
     LICENSE44 = 20,
     LICENSE45 = 20
+    LIMITED = 720,
 }
