@@ -1,1 +1,2 @@
-
+MyKey1=3600
+AnotherKey=600
