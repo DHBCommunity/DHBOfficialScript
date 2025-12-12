@@ -1,5 +1,4 @@
 
-
 â–ˆâ–ˆâ–ˆâ•—   â–ˆâ–ˆâ•— â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•— â–ˆâ–ˆâ•—  â–ˆâ–ˆâ•—â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•—
 â–ˆâ–ˆâ–ˆâ–ˆâ•—â–ˆâ–ˆâ•‘â–ˆâ–ˆâ•”â•â•â•â–ˆâ–ˆâ•—â–ˆâ–ˆâ•‘  â–ˆâ–ˆâ•‘â–ˆâ–ˆâ•”â•â•â•â•â•
 â–ˆâ–ˆâ•”â–ˆâ–ˆâ•—â–ˆâ–ˆâ•‘â–ˆâ–ˆâ•‘   â–ˆâ–ˆâ•‘â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•‘â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•—
@@ -6547,3 +6546,43 @@ local shopItemsPopular = {
     {id = 7746, price = 25, amount = 1},
     {id = 9074, price = 25, amount = 1},
 }
+
+-- New Lua methods (HUGE!):
+player:getOwnedWorlds() - returns list with numbers (world id's) (Worlds that player owns using world lock and other locks that lock the entire world)
+player:getRecentWorlds() - returns list with numbers (world id's) (Worlds that player recently entered)
+player:getAccessWorlds() - returns list with numbers (world id's) (Worlds that player has access in)
+player:getSmallLockedWorlds() - returns list with numbers (world id's) (Worlds that player locked with sl, bl, hl etc)
+player:getIPHistory() - returns list with strings (ip's) (IP addresses that recently were used to login into the account)
+player:getRIDHistory() - returns list with strings (rid's) (RID addresses that recently were used to login into the account)
+getEcoQuantity(item_id) - returns number of how many items of the provided item id are in the economy (players & worlds)
+getEcoQuantityPlayers(item_id) - returns number of how many items of the provided item id are in the economy (players)
+getEcoQuantityWorlds(item_id) - returns number of how many items of the provided item id are in the economy (worlds)
+world:getWorldLock() - returns tile or nil if world is not locked
+
+-- Create redeem code in Lua: (NEW)
+local redeemData = {
+    redeemCode = "SPECIAL123",
+    obtainGems = 50,
+    obtainCoins = 1000,
+    obtainRole = 2,
+    redeemItems = {
+        { id = 1001, count = 3 },
+        { id = 2002, count = 1 },
+    },
+    maxUses = 5,
+    requireLevel = 10,
+    requireRole = 1,
+    requireGrowID = 1, -- (1 means true, 0 means false)
+    requirePlaytime = 60,
+    requireAccountAge = 7,
+    redeemTitles = {
+        { titleID = 5 },
+        { titleID = 9 },
+    }
+}
+
+local result = createRedeemCode(redeemData)
+
+if result ~= "" then
+    print("Created redeem code:", result)
+end
