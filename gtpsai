@@ -6586,3 +6586,6 @@ local result = createRedeemCode(redeemData)
 if result ~= "" then
     print("Created redeem code:", result)
 end
+
+player:setBroadcastWorld(world_name) -- Might be useful if you're doing something with custom broadcasts (/go command will work)
+setBroadcastWorld(world_name) -- This does the same as above but will set it for all players online
