@@ -6630,3 +6630,14 @@ player:getBiweeklyQuests() - Returns table with task objects that have the same 
 getJimDailyQuest() - Note, no player: is needed here since its same for everyone. Returns jim daily quest task object that has these following properties available: jimDaily.firstItemID, jimDaily.firstItemCount, jimDaily.secondItemID, jimDaily.secondItemCount, jimDaily.completedPlayers (table with user id's).
 Other Lua changes:
 onPlayerSurgeryCallback(world, player, reward_id, reward_count, target_player) (UPDATED) - Now contains target_player if player did surgery on player then target_player will be a player, if not then it will be nil.
+
+Growpass - CUSTOMIZABLE (NEW)
+You can now change your growpass rewards / add new seasons / change duration & more, everything is now included in new growpass.json configuration file in config folder, accessible by <@&1421028372292829305>
+This is actually super-epic update because now every server can have unique rewards & even unique season durations 🎉
+Lua Growpass management (NEW):
+player:addGrowpassPoints(points)- Add growpass points to a player that can be spent in the growpass rewards, can be useful for making custom quests that give points.
+Other Lua suggestion (NEW):
+player:adjustBlockHitCount(amount)- For example set block hit count to 1 to make all blocks take extra hits to break, set to -1 to make it easier to break. (Note you need to add your own saving for that if you want it to be saved) (This method might be improved / changed a bit in the future).
+Note about adjustBlockHitCount, 1 is NOT 1 extra hit, its different depending on how much hits each block takes, you can set it to higher numbers to make them take even more hits, the maximum is +10 and -10. For example real-gt digger's spade increases adjustBlockHitCount by just 1 for blocks that aren't dirt and cave bg.
+P.S setting adjustBlockHitCount to -10 pretty much makes all blocks be 1 hit to break & it's super efficient too!
+player:getAdjustedBlockHitCount()- Get current adjusted block hit count.
