@@ -6589,3 +6589,44 @@ end
 
 player:setBroadcastWorld(world_name) -- Might be useful if you're doing something with custom broadcasts (/go command will work)
 setBroadcastWorld(world_name) -- This does the same as above but will set it for all players online
+
+Improved dialog callbacks (Less mistakes / less messy code):
+You can now add callback function to player:onDialogRequest() to handle the callback instead of using global dialog callback, here's example:
+    function handleMyGazetteDialogResponse(world, player, data)
+        -- Dialog is now the one called below
+        if data["buttonClicked"] == "test" then
+            player:onConsoleMessage("tada!")
+        end
+    end
+
+    player:onDialogRequest(
+        "set_default_color|`o\n" ..
+        "add_button|test|Test Button|left|\n" ..
+        "end_dialog|my_gazette|||",
+        0, -- delay (optional)
+        handleMyGazetteDialogResponse -- callback (optional)
+    )
+    
+Lua World access management (NEW):
+world:addAccess(player, 0) - Give player access to a world, works only if world is World Locked, if its not locked it will not do anything. This also can be used to promote / demote player from super-admin to regular or reverse. (Arg 2 - Admin type, 0 for regular; 1 for super-admin.)
+world:removeAccess(player) - Remove access from a world, works only if world is World Locked and player has access, if its not locked it will not do anything.
+world:addTileAccess(player, tile) - Give player permanent access to a specific tile in a world where player does not have access to, note: its very powerful if you give access to world lock tile or other locks the player CAN break them!
+world:removeTileAccess(player, tile) - Remove tile access (that was added before using lua addTileAccess).
+world:removeAllTileAccess() - Emergency command in-case you mess-up with addTileAccess.
+P.S we already have world:hasAccess(player) & world:hasTileAccess(player, tile)
+Lua Player system changes ⚠️ (IMPORTANT)
+ We have changed how players + Lua work for BIG performance increase, this change is very large and please be advised unexpected issues can occur, however we will be ready to solve them if any happen.
+ 
+Nicknames - UNLOCKED! (BETA)
+ You can now change your nickname to anything, it can contain colors, '@' , spaces and everything else. No more restrictions or limits.
+ Nickname is now also saved & after you re-login it will still remain. (The same update applies to Lua player:setNickname().
+Lua Player friends management (NEW):
+player:getFriends() - Returns table with friend id's (numbers).
+player:addFriend(target_player) - Add new friend to player friends (This will also add it to the user_id friend's list so the friends wont be one-way only).
+player:removeFriend(target_player) - Remove friend from player friends (This will also remove from the user_id friend's list).
+Lua Player get quests (NEW):
+player:getLifeGoals() - Returns table with task objects that have these following properties available: lifeGoal.taskID, lifeGoal.taskTargetValue, lifeGoal.taskCompletedValue, lifeGoal.taskReward, lifeGoal.deliverItem, lifeGoal.rewardAmount, lifeGoal.claimed, lifeGoal.givenup, lifeGoal.completed, lifeGoal.lastAnnouncePercentage.
+player:getBiweeklyQuests() - Returns table with task objects that have the same properties as getLifeGoals.
+getJimDailyQuest() - Note, no player: is needed here since its same for everyone. Returns jim daily quest task object that has these following properties available: jimDaily.firstItemID, jimDaily.firstItemCount, jimDaily.secondItemID, jimDaily.secondItemCount, jimDaily.completedPlayers (table with user id's).
+Other Lua changes:
+onPlayerSurgeryCallback(world, player, reward_id, reward_count, target_player) (UPDATED) - Now contains target_player if player did surgery on player then target_player will be a player, if not then it will be nil.
