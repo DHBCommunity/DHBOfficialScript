@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EasyScript Pro | Developer Hub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #020617;
+            --bg-card: #0f172a;
+            --primary: #6366f1;
+            --primary-light: #818cf8;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #1e293b;
+            --danger: #ef4444;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --glass: rgba(15, 23, 42, 0.85);
+        }
+
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-dark); color: var(--text-main); margin: 0; line-height: 1.5; overflow-x: hidden; }
+        .hidden { display: none !important; }
+
+      /* Badge Positioning */
+.badge-container {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    display: flex;
+    gap: 6px;
+    z-index: 10;
+}
+
+.owner-badge {
+    background: var(--primary);
+    color: white;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 4px 8px;
+    border-radius: 6px;
+    text-transform: uppercase;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+/* Redefining your saved-badge slightly for consistency */
+.saved-badge {
+    position: static !important; /* Overrides absolute to work in flex container */
+    background: var(--warning);
+    color: #000;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 4px 8px;
+    border-radius: 6px;
+    text-transform: uppercase;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+        /* --- Moving Silver Gradient Logo --- */
+        .logo-anim {
+            font-size: 24px;
+            font-weight: 800;
+            background: linear-gradient(90deg, #71717a, #f8fafc, #71717a);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: silverMove 3s linear infinite;
+        }
+		
+		.saved-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: var(--warning);
+    color: #000;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 4px 8px;
+    border-radius: 6px;
+    text-transform: uppercase;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    z-index: 2;
+}
+
+       @keyframes silverMove {
+            to { background-position: 200% center; }
+        }
+
+        /* --- Custom Notifications --- */
+        #notif-stack { position: fixed; top: 20px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+        .es-notif { 
+            pointer-events: auto; background: var(--bg-card); border: 1px solid var(--border); border-left: 5px solid var(--primary);
+            padding: 15px 25px; border-radius: 12px; color: white; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            min-width: 280px; transform: translateX(120%); transition: 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .es-notif.show { transform: translateX(0); }
+        .es-notif.success { border-left-color: var(--success); }
+        .es-notif.danger { border-left-color: var(--danger); }
+
+        /* --- Navigation --- */
+        nav { background: var(--glass); backdrop-filter: blur(12px); padding: 0 40px; height: 70px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+        .nav-links { display: flex; gap: 8px; align-items: center; }
+        .tab-link { color: var(--text-muted); text-decoration: none; font-weight: 500; font-size: 14px; cursor: pointer; padding: 8px 16px; border-radius: 8px; transition: 0.2s; }
+        .tab-link:hover { color: var(--text-main); background: rgba(255,255,255,0.05); }
+        .tab-link.active { color: white; background: var(--primary); }
+
+        /* --- Layout --- */
+        .container { max-width: 1100px; margin: 40px auto; padding: 0 20px; }
+        .script-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px; }
+        
+        .script-card { 
+            background: var(--bg-card); 
+            border-radius: 16px; 
+            border: 1px solid var(--border); 
+            position: relative; 
+            transition: 0.3s; 
+            cursor: pointer;
+            /* FIX: Changed from hidden to allow dropdowns to pop out */
+            overflow: visible; 
+        }
+        .script-card:hover { transform: translateY(-5px); border-color: var(--primary); }
+
+        /* --- Dropdowns --- */
+        .dropdown-btn { background: rgba(0,0,0,0.6); color: white; border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .dropdown-menu { 
+            position: absolute; 
+            background: #1e293b; 
+            border: 1px solid var(--border); 
+            border-radius: 12px; 
+            z-index: 1000; 
+            overflow: hidden; 
+            box-shadow: 0 10px 20px rgba(0,0,0,0.4); 
+            min-width: 150px; 
+            display: none; 
+            right: 15px;
+            top: 45px;
+        }
+        .dropdown-menu.active { display: block; }
+        .dropdown-menu button { display: block; width: 100%; padding: 12px 15px; background: none; border: none; color: white; text-align: left; cursor: pointer; font-size: 13px; transition: 0.2s; }
+        .dropdown-menu button:hover { background: var(--primary); }
+
+        /* FIX: Round top corners here since card overflow is visible */
+        .thumb-wrapper { height: 180px; background: #020617; position: relative; border-radius: 16px 16px 0 0; overflow: hidden; }
+        .thumb-img { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; }
+        .card-content { padding: 20px; }
+        .tag-pill { font-size: 10px; padding: 2px 8px; border-radius: 4px; background: var(--border); color: var(--text-muted); margin-right: 5px; text-transform: uppercase; }
+
+        /* --- Modals --- */
+        .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(2, 6, 23, 0.95); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(8px); }
+        .modal-content { background: var(--bg-card); width: 95%; max-width: 850px; max-height: 90vh; overflow-y: auto; border-radius: 24px; padding: 40px; position: relative; border: 1px solid var(--border); }
+        
+        .code-box { background: #020617; padding: 20px; border-radius: 12px; font-family: monospace; font-size: 13px; color: #818cf8; border: 1px solid var(--border); margin: 20px 0; overflow-x: auto; }
+        
+        input, textarea, select { width: 100%; background: #020617; border: 1px solid var(--border); color: white; padding: 14px; border-radius: 10px; margin: 10px 0; font-family: inherit; box-sizing: border-box; outline: none; }
+        select { cursor: pointer; appearance: none; }
+
+        .btn { padding: 12px 24px; border-radius: 10px; border: none; font-weight: 600; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 8px; font-size: 14px; }
+        .btn-primary { background: var(--primary); color: white; }
+        
+        /* Join Game Button Specifics */
+        .btn-join { background: #2b3544; border: 1px solid var(--border); color: #fff; width: 100%; margin-top: 12px; padding: 10px; font-size: 12px; justify-content: center; }
+        .btn-join:hover { background: var(--success); border-color: var(--success); }
+
+        /* --- Interaction --- */
+        .interaction-row { display: flex; gap: 10px; margin: 20px 0; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+        .stat-btn { background: #1e293b; border: 1px solid var(--border); color: var(--text-muted); padding: 10px 15px; border-radius: 10px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 6px; }
+        .stat-btn.active-up { color: var(--success); border-color: var(--success); background: rgba(16, 185, 129, 0.1); }
+        .stat-btn.active-down { color: var(--danger); border-color: var(--danger); background: rgba(239, 68, 68, 0.1); }
+        .stat-btn.active-fav { color: var(--warning); border-color: var(--warning); background: rgba(245, 158, 11, 0.1); }
+
+        /* --- Comments --- */
+        .comment { background: rgba(255,255,255,0.02); padding: 18px; border-radius: 14px; margin-bottom: 15px; border: 1px solid var(--border); position: relative; overflow: visible; }
+        .comment-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .comment-info { display: flex; flex-direction: column; }
+        .comment-user { font-weight: 700; font-size: 14px; color: var(--primary-light); }
+        .comment-date { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+        .comment-body { font-size: 14px; color: var(--text-main); word-wrap: break-word; line-height: 1.6; padding-right: 40px; }
+        .comment-menu-btn { position: absolute; top: 15px; right: 15px; z-index: 10; }
+    </style>
+</head>
+<body>
+
+<div id="notif-stack"></div>
+
+<div id="confirm-modal" class="modal-overlay hidden" style="z-index: 20000;">
+    <div class="modal-content" style="max-width: 400px; text-align: center; padding: 30px;">
+        <div style="font-size: 50px; margin-bottom: 15px;">⚠️</div>
+        <h2 id="confirm-title" style="margin: 0 0 10px 0;">Are you sure?</h2>
+        <p id="confirm-msg" style="color: var(--text-muted); margin-bottom: 25px;">This action cannot be undone.</p>
+        
+        <div style="display: flex; gap: 12px;">
+            <button class="btn" style="flex: 1; background: #334155; color: white;" onclick="closeConfirm()">Cancel</button>
+            <button id="confirm-yes-btn" class="btn" style="flex: 1; background: var(--danger); color: white;">Yes, Delete</button>
+        </div>
+    </div>
+</div>
+
+<nav>
+    <div class="logo-anim">EasyScript</div>
+    <div class="nav-links">
+        <a class="tab-link active" id="tab-recent" onclick="switchTab('feed', 'recent')">Home</a>
+        <a class="tab-link" id="tab-favorites" onclick="switchTab('feed', 'favorites')">Favorites</a>
+        <a class="tab-link" id="tab-my" onclick="switchTab('feed', 'my')">My Post</a>
+        <a class="tab-link" onclick="switchTab('upload')" id="upload-nav-btn" style="color: var(--primary-light);">+ Upload</a>
+        <a id="logout-btn" class="tab-link hidden" onclick="logout()" style="color: var(--danger);">Logout</a>
+    </div>
+</nav>
+
+<div class="container">
+    <div id="section-auth">
+        <div style="max-width: 400px; margin: 100px auto; background: var(--bg-card); padding: 40px; border-radius: 24px; border: 1px solid var(--border);">
+            <h2 style="text-align:center; margin-top:0;">Dev Login</h2>
+            <input type="email" id="email" placeholder="Email">
+            <input type="password" id="password" placeholder="Password">
+            <button class="btn btn-primary" style="width:100%;" onclick="signup()">Join Community</button>
+            <button class="btn" style="background:none; color:var(--text-muted); width:100%; margin-top:10px;" onclick="login()">Log In</button>
+        </div>
+    </div>
+
+    <div id="section-feed" class="hidden">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 30px;">
+            <h1 id="feed-title" style="margin:0; font-size: 24px;">Community Scripts</h1>
+            <input type="text" id="search-input" style="width: 250px; margin:0;" placeholder="Search..." oninput="renderFeed()">
+        </div>
+        <div class="script-grid" id="scriptGrid"></div>
+    </div>
+
+    <div id="section-upload" class="hidden">
+        <div style="max-width: 700px; margin: auto; background: var(--bg-card); padding: 40px; border-radius: 24px; border: 1px solid var(--border);">
+            <h2 id="upload-header">Upload Script</h2>
+            <input type="hidden" id="edit-id">
+            <input type="text" id="up-title" placeholder="Script Name">
+            
+            <div style="display: flex; gap: 10px;">
+                <select id="up-key">
+                    <option value="N/A">Key System: N/A</option>
+                    <option value="Keyless">Keyless</option>
+                    <option value="Key System">Key System</option>
+                </select>
+                <select id="up-payment">
+                    <option value="N/A">Payment: N/A</option>
+                    <option value="Free">Free</option>
+                    <option value="Paid">Paid</option>
+                </select>
+            </div>
+
+            <input type="text" id="up-gameid" placeholder="Roblox Game ID">
+            <textarea id="up-features" rows="2" placeholder="Features (e.g. Auto Quest, Fly, ESP)"></textarea>
+            <input type="file" id="up-thumb-file" accept="image/*">
+            <textarea id="up-script" rows="10" placeholder="-- Paste Lua Code Here"></textarea>
+            <button id="upload-btn" class="btn btn-primary" style="width:100%;" onclick="savePost()">Publish Script</button>
+            <button class="btn" style="width:100%; background:none; color:var(--text-muted); margin-top:10px;" onclick="switchTab('feed')">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<div id="post-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <button onclick="closeModal()" style="position:absolute; top:20px; right:20px; background:none; border:none; color:white; font-size:28px; cursor:pointer;">&times;</button>
+        <h2 id="modal-title" style="margin:0;"></h2>
+        <p id="modal-author" style="color:var(--text-muted); font-size:13px; margin:5px 0 20px 0;"></p>
+        
+        <div id="modal-tags" style="margin-bottom: 15px;"></div>
+
+      <div class="interaction-row">
+    <button class="stat-btn" id="like-btn" onclick="vote(1)">👍 <span id="modal-likes">0</span></button>
+    <button class="stat-btn" id="dislike-btn" onclick="vote(-1)">👎 <span id="modal-dislikes">0</span></button>
+    
+    <div class="stat-btn" style="cursor: default; opacity: 0.8;">
+        👁️ <span id="modal-views">0</span>
+    </div>
+
+    <button class="stat-btn" id="fav-btn" onclick="toggleFav()">⭐ Favorite</button>
+   </div>
+
+        <div class="code-box" id="modal-code"></div>
+        
+        <div style="display: flex; gap: 12px;">
+            <button class="btn btn-primary" style="flex: 1; justify-content: center;" onclick="copyScript()">📋 Copy Script</button>
+            <button class="btn" style="flex: 1; justify-content: center; background: #334155; color: white;" onclick="downloadScript()">📥 Download .txt</button>
+        </div>
+
+        <div style="margin-top:40px;">
+            <h3>Comments</h3>
+            <div style="display:flex; gap:10px; margin-bottom:20px;">
+                <input type="text" id="comment-input" style="margin:0;" placeholder="Add a comment...">
+                <button class="btn btn-primary" onclick="addComment()">Post</button>
+            </div>
+            <div id="comments-container"></div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+    const _supabase = supabase.createClient('https://kappjyhgnyeetqhzwcpn.supabase.co', 'sb_publishable_iQDbMK9zbPO6Qi53bFO6pg_7qMBxYD4');
+    
+    // Replace your current renderFeed and savePost with these global versions:
+</script>
+
+<script>
+    let currentUser = localStorage.getItem('session_user') || null;
+    let activePostId = null;
+    const DEFAULT_THUMB = "https://www.bing.com/th/id/OIP.YpUWqwMu822ARQxlUvP7mgHaHa?w=195&h=211&c=8&rs=1&qlt=90&o=6&pid=3.1&rm=2";
+
+    // Creates a unique ID for guests that lasts until they clear browser data
+if (!localStorage.getItem('guest_session')) {
+    localStorage.setItem('guest_session', 'g-' + Math.random().toString(36).substr(2, 9));
+}
+const viewerId = currentUser || localStorage.getItem('guest_session');
+
+    function pushNotif(msg, type = 'success') {
+        const stack = document.getElementById('notif-stack');
+        const el = document.createElement('div');
+        el.className = `es-notif ${type}`;
+        el.innerHTML = `<span>${msg}</span>`;
+        stack.appendChild(el);
+        setTimeout(() => el.classList.add('show'), 10);
+        setTimeout(() => {
+            el.classList.remove('show');
+            setTimeout(() => el.remove(), 500);
+        }, 3000);
+    }
+
+    window.onload = () => {
+        if(currentUser) {
+            document.getElementById('section-auth').classList.add('hidden');
+            document.getElementById('logout-btn').classList.remove('hidden');
+            switchTab('feed');
+        }
+    };
+
+  function downloadScript() {
+    // 1. Get the title and script from the modal UI instead of localStorage
+    const title = document.getElementById('modal-title').innerText;
+    
+    // Check if your code box is a div or a textarea
+    const codeBox = document.getElementById('modal-code');
+    const scriptContent = codeBox.innerText || codeBox.value;
+
+    if (!scriptContent) return pushNotif("No script content found", "danger");
+
+    // 2. Clean filename: remove special characters and spaces
+    const cleanName = title.replace(/[^a-z0-9]/gi, '').toLowerCase() || "script";
+    
+    // 3. Create the file blob
+    const blob = new Blob([scriptContent], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.style.display = 'none'; // Keep it hidden
+    a.href = url;
+    a.download = `${cleanName}.txt`;
+    
+    // 4. Trigger download
+    document.body.appendChild(a);
+    a.click();
+    
+    // 5. Cleanup with a slight delay (Fixes Firefox/Chrome issues)
+    setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+    }, 100);
+    
+    pushNotif("Download Started!");
+}
+
+    function timeAgo(date) {
+        const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+        if (seconds < 60) return "Just now";
+        if (seconds < 3600) return Math.floor(seconds/60) + "m ago";
+        if (seconds < 86400) return Math.floor(seconds/3600) + "h ago";
+        return Math.floor(seconds/86400) + "d ago";
+    }
+
+    // Converts a file to a Base64 string so it can be saved in LocalStorage
+const toBase64 = file => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = error => reject(error);
+});
+
+   function switchTab(tabId, filter = 'recent') {
+    if(!currentUser && tabId !== 'feed') return pushNotif("Please login first", "danger");
+    
+    document.querySelectorAll('.container > div').forEach(d => d.classList.add('hidden'));
+    document.querySelectorAll('.tab-link').forEach(a => a.classList.remove('active'));
+    
+    document.getElementById(`section-${tabId}`).classList.remove('hidden');
+    
+    if(tabId === 'feed') {
+        // This ensures the correct tab button stays highlighted
+        const activeBtn = document.getElementById(`tab-${filter}`);
+        if(activeBtn) activeBtn.classList.add('active');
+        renderFeed(filter);
+    }
+}
+
+  function signup() {
+    const emailInput = document.getElementById('email');
+    const passInput = document.getElementById('password');
+    
+    // Trim spaces
+    const e = emailInput.value.trim();
+    const p = passInput.value.trim();
+
+    // 1. Check if empty
+    if (!e || !p) {
+        return pushNotif("Please enter an email and password", "danger");
+    }
+
+    // 2. Simple Email Check (Must have @ and a dot)
+    if (!e.includes('@') || !e.includes('.')) {
+        return pushNotif("Please enter a valid email address", "warning");
+    }
+
+    // 3. Password Length
+    if (p.length < 4) {
+        return pushNotif("Password must be at least 4 characters", "warning");
+    }
+
+    // 4. CHECK IF ALREADY REGISTERED
+    if (localStorage.getItem(`u_${e}`)) {
+        return pushNotif("Account already exists! Try logging in.", "danger");
+    }
+
+    // 5. SUCCESS: Save and Log in
+    localStorage.setItem(`u_${e}`, p);
+    pushNotif("Account Created Successfully!");
+    
+    // Auto-login logic
+    currentUser = e;
+    localStorage.setItem('session_user', e);
+    
+    // Refresh to enter the app
+    setTimeout(() => {
+        location.reload();
+    }, 800);
+}
+   function login() {
+    const e = document.getElementById('email').value.trim();
+    const p = document.getElementById('password').value.trim();
+
+    // 1. Get the stored password for this specific email
+    const storedPassword = localStorage.getItem(`u_${e}`);
+
+    // 2. CHECK: Does the user even exist?
+    if (!storedPassword) {
+        return pushNotif("Account not found. Please sign up first!", "danger");
+    }
+
+    // 3. CHECK: Does the password match?
+    if (storedPassword === p) {
+        currentUser = e; 
+        localStorage.setItem('session_user', e); 
+        pushNotif("Login successful!", "success");
+        location.reload();
+    } else { 
+        pushNotif("Incorrect password!", "danger"); 
+    }
+}
+    function logout() {
+    // 1. Remove the session
+    localStorage.removeItem('session_user');
+    
+    // 2. Clear the local variable so functions like toggleFav() stop working immediately
+    currentUser = null;
+    
+    // 3. Optional: Push a notification so the user sees it's happening
+    pushNotif("Logged out successfully", "success");
+    
+    // 4. Refresh to reset the UI state
+    setTimeout(() => {
+        location.reload();
+    }, 500); // Small delay to let the notification show
+}
+
+// Add this outside the function to track state
+let isSubmitting = false;
+
+async function savePost() {
+    // 1. Prevent Spam: If already submitting, stop right here
+    if (isSubmitting) return;
+
+    const title = document.getElementById('up-title').value;
+    const script = document.getElementById('up-script').value;
+    const editId = document.getElementById('edit-id').value;
+    const fileInput = document.getElementById('up-thumb-file');
+  const submitBtn = document.getElementById('upload-btn');
+    
+    if(!title || !script) return pushNotif("Missing Title/Script", "danger");
+
+    // 2. Lock the function and update Button UI
+    isSubmitting = true;
+    if (submitBtn) {
+        submitBtn.innerText = "Publishing...";
+        submitBtn.style.opacity = "0.7";
+        submitBtn.style.cursor = "not-allowed";
+    }
+
+    let thumbData = DEFAULT_THUMB;
+
+    if (fileInput.files && fileInput.files[0]) {
+        try {
+            thumbData = await toBase64(fileInput.files[0]);
+        } catch (err) {
+            isSubmitting = false; // Unlock on error
+            if (submitBtn) submitBtn.innerText = "Publish Script"; 
+            return pushNotif("Error processing image", "danger");
+        }
+    }
+
+    const postData = {
+        title: title, 
+        script: script,
+        keySystem: document.getElementById('up-key').value,
+        payment: document.getElementById('up-payment').value,
+        gameId: document.getElementById('up-gameid').value,
+        features: document.getElementById('up-features').value,
+        thumb: thumbData,
+        author: currentUser.split('@')[0],
+        authorEmail: currentUser
+    };
+
+    try {
+        if(editId) {
+            const { error } = await _supabase
+                .from('posts')
+                .update(postData)
+                .eq('id', editId);
+
+            if (error) throw error;
+            pushNotif("Script Updated Globally!");
+        } else {
+            const { error } = await _supabase
+                .from('posts')
+                .insert([postData]);
+
+            if (error) throw error;
+            pushNotif("Script Published to Community!");
+        }
+
+        // 4. Cleanup UI
+        fileInput.value = "";
+        document.getElementById('edit-id').value = ""; 
+        switchTab('feed');
+
+    } catch (err) {
+        console.error("Supabase Error:", err);
+        pushNotif("Database Error: " + err.message, "danger");
+    } finally {
+        // 5. UNLOCK: This runs whether the try succeeded OR failed
+        isSubmitting = false;
+        if (submitBtn) {
+            submitBtn.innerText = "Publish Script";
+            submitBtn.style.opacity = "1";
+            submitBtn.style.cursor = "pointer";
+        }
+    }
+}
+  async function renderFeed(filter = 'recent') {
+    const grid = document.getElementById('scriptGrid');
+    const search = document.getElementById('search-input').value.toLowerCase();
+
+    // 1. Fetch Global Data from Supabase
+    // We use .order() to show the newest scripts first (highest ID or created_at)
+    let { data: posts, error } = await _supabase
+        .from('posts')
+        .select('*')
+        .order('id', { ascending: false });
+
+    if (error) {
+        console.error("Supabase Error:", error);
+        return pushNotif("Failed to sync global feed", "danger");
+    }
+
+    // 2. Apply Filters (Client-side for JSON arrays)
+    if (filter === 'favorites') {
+        posts = posts.filter(p => (p.favorites || []).includes(currentUser));
+    } else if (filter === 'my') {
+        posts = posts.filter(p => p.authorEmail === currentUser);
+    }
+
+    // 3. Apply Search
+    if (search) {
+        posts = posts.filter(p => 
+            p.title.toLowerCase().includes(search) || 
+            (p.features && p.features.toLowerCase().includes(search))
+        );
+    }
+
+// 4. Clear Grid and Handle Empty State
+    grid.innerHTML = '';
+
+    // If posts is null (error) or an empty array (no results)
+    if (!posts || posts.length === 0) {
+        grid.innerHTML = `
+            <div style="grid-column: 1/-1; text-align: center; padding: 100px 20px; color: var(--text-muted);">
+                <div style="font-size: 50px; margin-bottom: 15px; filter: grayscale(1);">🔎</div>
+                <h3 style="color: var(--text-main); margin-bottom: 8px;">No Scripts Found</h3>
+                <p>Try changing your filters or be the first to publish a script!</p>
+                <button class="btn" onclick="switchTab('upload')" style="margin-top: 15px; background: var(--primary); color: white;">
+                    + Upload Now
+                </button>
+            </div>`;
+        return;
+    }
+
+    // 5. Render Global Post Cards
+    posts.forEach(p => {
+        const isOwner = p.authorEmail === currentUser;
+        const isSaved = (p.favorites || []).includes(currentUser);
+
+        const viewCount = p.views ? p.views.length : 0;
+        const likeCount = p.likes ? p.likes.length : 0;
+        const dislikeCount = p.dislikes ? p.dislikes.length : 0;
+
+        grid.innerHTML += `
+            <div class="script-card" onclick="openPost(${p.id})">
+                <div class="badge-container">
+                    ${isOwner ? '<div class="owner-badge">Your Post</div>' : ''}
+                    ${isSaved ? '<div class="saved-badge">⭐ Saved</div>' : ''}
+                </div>
+
+                <div class="thumb-wrapper">
+                    <img src="${p.thumb}" class="thumb-img" onerror="this.src='${DEFAULT_THUMB}'">
+                </div>
+                
+                <div class="card-content">
+                    <div style="font-weight:700; color:var(--text-main);">${p.title}</div>
+                    
+                    <div style="margin-top:8px; display:flex; gap:5px; align-items:center;">
+                        <span class="tag-pill">${p.keySystem || 'N/A'}</span>
+                        <span class="tag-pill">${p.payment || 'N/A'}</span>
+                    </div>
+
+                    <div style="margin-top:12px; display:flex; gap:10px; font-size:11px; color:var(--text-muted);">
+                        <span title="Views">👁️ <span id="v-count-${p.id}">${viewCount}</span></span>
+                        <span title="Likes">👍 <span id="l-count-${p.id}">${likeCount}</span></span>
+                        <span title="Dislikes">👎 <span id="d-count-${p.id}">${dislikeCount}</span></span>
+                    </div>
+
+                    <div style="font-size:11px; color:var(--text-muted); margin-top:10px; display:flex; align-items:center; gap:5px;">
+                        <div style="width:18px; height:18px; background:var(--primary); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:8px; color:white;">
+                            ${p.author ? p.author[0].toUpperCase() : '?'}
+                        </div>
+                        @${p.author}
+                    </div>
+                </div>
+
+                ${isOwner ? `
+                <div class="comment-menu-btn" onclick="event.stopPropagation()">
+                    <button class="dropdown-btn" onclick="toggleDrop('drop-${p.id}')">⋮</button>
+                    <div id="drop-${p.id}" class="dropdown-menu">
+                        <button onclick="editPost(${p.id})">Edit Script</button>
+                        <button onclick="deletePost(${p.id})" style="color:var(--danger)">Delete Permanent</button>
+                    </div>
+                </div>` : ''}
+            </div>`;
+    });
+}
+
+async function openPost(id) {
+    activePostId = id;
+    
+    // 1. Fetch the post directly from the Supabase cloud
+    const { data: p, error } = await _supabase
+        .from('posts')
+        .select('*')
+        .eq('id', id)
+        .single();
+    
+    if (error || !p) {
+        console.error("Fetch error:", error);
+        return pushNotif("Post not found in cloud database", "danger");
+    }
+
+    // 2. Global View Counter Logic
+    const viewer = currentUser || localStorage.getItem('guest_session') || 'guest';
+    let updatedViews = p.views || [];
+    
+    if (!updatedViews.includes(viewer)) {
+        updatedViews.push(viewer);
+        
+        await _supabase
+            .from('posts')
+            .update({ views: updatedViews })
+            .eq('id', id);
+            
+        // Background refresh for the feed cards
+        const activeTabEl = document.querySelector('.tab-link.active');
+        renderFeed(activeTabEl ? activeTabEl.id.replace('tab-', '') : 'recent');
+    }
+
+    // 3. Update the Modal UI
+    document.getElementById('modal-title').innerText = p.title;
+    // Fallback to email prefix if 'author' name is missing
+    document.getElementById('modal-author').innerText = `By @${p.author || p.authorEmail.split('@')[0]}`;
+    
+    // If using a textarea for the script:
+    const codeEl = document.getElementById('modal-code');
+    if(codeEl.tagName === 'TEXTAREA') codeEl.value = p.script;
+    else codeEl.innerText = p.script;
+    
+    // Update stats counters
+    document.getElementById('modal-likes').innerText = p.likes ? p.likes.length : 0;
+    document.getElementById('modal-dislikes').innerText = p.dislikes ? p.dislikes.length : 0;
+    document.getElementById('modal-views').innerText = updatedViews.length;
+
+    // 4. Roblox Join Game Link Logic
+    const isValidId = p.gameId && !isNaN(p.gameId) && p.gameId.toString().trim() !== "";
+    const joinBtnHtml = isValidId 
+        ? `<button class="btn" style="background:var(--success); color:white; font-size:12px; padding:4px 12px; margin-left: 10px;" 
+            onclick="window.open('https://www.roblox.com/games/${p.gameId}/', '_blank')">🎮 Join Game</button>` 
+        : '';
+
+    document.getElementById('modal-tags').innerHTML = `
+        <span class="tag-pill" style="font-size:12px; padding:4px 12px;">${p.keySystem || 'No Key'}</span>
+        <span class="tag-pill" style="font-size:12px; padding:4px 12px;">${p.payment || 'Free'}</span>
+        ${joinBtnHtml}
+    `;
+
+    // 5. Interaction UI & Comments
+    updateInteractionUI(p);
+    renderComments(p.comments || [], p.authorEmail);
+    
+    // Show the modal and prevent background scroll
+    document.getElementById('post-modal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden'; 
+}
+
+ async function vote(type) {
+    if (!currentUser) return pushNotif("Please login to vote", "danger");
+
+    // --- STEP 1: OPTIMISTIC UI (INSTANT) ---
+    const lBtn = document.getElementById('like-btn');
+    const dBtn = document.getElementById('dislike-btn');
+    const lCountEl = document.getElementById('modal-likes');
+    const dCountEl = document.getElementById('modal-dislikes');
+
+    let curL = parseInt(lCountEl.innerText) || 0;
+    let curD = parseInt(dCountEl.innerText) || 0;
+
+    // Instant Visual Change
+    if (type === 1) {
+        if (lBtn.classList.contains('active-up')) {
+            lBtn.classList.remove('active-up');
+            lCountEl.innerText = curL - 1;
+        } else {
+            lBtn.classList.add('active-up');
+            lCountEl.innerText = curL + 1;
+            if (dBtn.classList.contains('active-down')) {
+                dBtn.classList.remove('active-down');
+                dCountEl.innerText = Math.max(0, curD - 1);
+            }
+        }
+    } else {
+        if (dBtn.classList.contains('active-down')) {
+            dBtn.classList.remove('active-down');
+            dCountEl.innerText = curD - 1;
+        } else {
+            dBtn.classList.add('active-down');
+            dCountEl.innerText = curD + 1;
+            if (lBtn.classList.contains('active-up')) {
+                lBtn.classList.remove('active-up');
+                lCountEl.innerText = Math.max(0, curL - 1);
+            }
+        }
+    }
+
+    // --- STEP 2: BACKGROUND SYNC (SILENT) ---
+    const { data: post } = await _supabase.from('posts').select('likes, dislikes').eq('id', activePostId).single();
+    if (!post) return;
+
+    let upVotes = post.likes || [];
+    let downVotes = post.dislikes || [];
+
+    if (type === 1) {
+        if (upVotes.includes(currentUser)) upVotes = upVotes.filter(u => u !== currentUser);
+        else { upVotes.push(currentUser); downVotes = downVotes.filter(u => u !== currentUser); }
+    } else {
+        if (downVotes.includes(currentUser)) downVotes = downVotes.filter(u => u !== currentUser);
+        else { downVotes.push(currentUser); upVotes = upVotes.filter(u => u !== currentUser); }
+    }
+
+    await _supabase.from('posts').update({ likes: upVotes, dislikes: downVotes }).eq('id', activePostId);
+    
+    // Refresh background feed quietly
+    const activeFilter = document.querySelector('.tab-link.active')?.id.replace('tab-', '') || 'recent';
+    renderFeed(activeFilter);
+}
+
+async function toggleFav() {
+    if (!currentUser) return pushNotif("Please login to favorite", "danger");
+
+    const favBtn = document.getElementById('fav-btn');
+    if (!favBtn) return;
+
+    // 1. OPTIMISTIC UI (INSTANT)
+    // We check the current state and flip it immediately before talking to the database
+    const currentlySaved = favBtn.classList.contains('active-fav');
+    const willBeSaved = !currentlySaved;
+
+    // Flip colors and text instantly
+    favBtn.classList.toggle('active-fav', willBeSaved);
+    favBtn.innerHTML = willBeSaved ? `⭐ Favorite` : `⭐ Favorite`;
+
+    // 2. BACKGROUND SYNC (SILENT)
+    // Now we do the heavy lifting while the user is already happy
+    const { data: p, error: fetchError } = await _supabase
+        .from('posts')
+        .select('favorites')
+        .eq('id', activePostId)
+        .single();
+
+    if (fetchError) {
+        // Rollback UI if the cloud fetch fails
+        favBtn.classList.toggle('active-fav', currentlySaved);
+        favBtn.innerHTML = currentlySaved ? `⭐ Favorite` : `⭐ Favorite`;
+        return pushNotif("Sync error", "danger");
+    }
+
+    let favs = p.favorites || [];
+    
+    // Process logic based on our optimistic choice
+    if (willBeSaved) {
+        if (!favs.includes(currentUser)) favs.push(currentUser);
+    } else {
+        favs = favs.filter(u => u !== currentUser);
+    }
+
+    // 3. PUSH TO CLOUD
+    const { error: upError } = await _supabase
+        .from('posts')
+        .update({ favorites: favs })
+        .eq('id', activePostId);
+
+    if (upError) {
+        // Rollback UI if the update fails
+        favBtn.classList.toggle('active-fav', currentlySaved);
+        favBtn.innerHTML = currentlySaved ? `⭐ Favorite` : `⭐ Favorite`;
+        return pushNotif("Failed to save globally", "danger");
+    }
+
+    // Notify user only after successful cloud sync
+    pushNotif(willBeSaved ? "Added to Saved" : "Removed from Saved", willBeSaved ? "success" : "warning");
+    
+    // 4. BACKGROUND FEED REFRESH
+    // We don't 'await' this so the modal stays smooth
+    const activeTab = document.querySelector('.tab-link.active')?.id.replace('tab-', '') || 'recent';
+    renderFeed(activeTab);
+}
+
+ function updateInteractionUI(p) {
+    const favBtn = document.getElementById('fav-btn');
+    if (!favBtn) return;
+
+    const isFav = (p.favorites || []).includes(currentUser);
+    
+    // Apply the yellow class if favorited
+    favBtn.classList.toggle('active-fav', isFav);
+    
+    // Set the correct text
+    favBtn.innerHTML = isFav ? `⭐ Favorite` : `⭐ Favorite`;
+
+    // Also handle Likes/Dislikes
+    document.getElementById('like-btn').classList.toggle('active-up', (p.likes || []).includes(currentUser));
+    document.getElementById('dislike-btn').classList.toggle('active-down', (p.dislikes || []).includes(currentUser));
+}
+
+  // Add this at the very top of your script (outside the function)
+let isCommenting = false; 
+
+async function addComment() {
+    if (!currentUser) return pushNotif("Please login to comment", "danger");
+    
+    // Prevent double-clicks while the first one is processing
+    if (isCommenting) return; 
+
+    const input = document.getElementById('comment-input');
+    const btn = document.querySelector('.comment-submit-btn'); // Make sure your button has a class or ID
+    const val = input.value.trim();
+    if (!val) return;
+
+    // 1. Fetch the LATEST comments
+    isCommenting = true; // Lock the function
+    if(btn) btn.disabled = true; // Visually disable button
+
+    const { data: p, error: fetchError } = await _supabase
+        .from('posts')
+        .select('comments, authorEmail')
+        .eq('id', activePostId)
+        .single();
+
+    if (fetchError) {
+        isCommenting = false;
+        if(btn) btn.disabled = false;
+        return pushNotif("Failed to sync comments", "danger");
+    }
+
+    const comments = p.comments || [];
+
+    // 2. ANTI-SPAM: Check if the user is posting too fast (5-second cooldown)
+    const myLastComment = [...comments].reverse().find(c => c.email === currentUser);
+    if (myLastComment) {
+        const timeSinceLast = Date.now() - new Date(myLastComment.date).getTime();
+        if (timeSinceLast < 5000) { // 5000ms = 5 seconds
+            isCommenting = false;
+            if(btn) btn.disabled = false;
+            return pushNotif("Please wait a few seconds before posting again", "warning");
+        }
+    }
+
+    // 3. Create the new comment
+    const newComment = {
+        id: Date.now(),
+        user: currentUser.split('@')[0],
+        email: currentUser,
+        text: val,
+        date: new Date().toISOString()
+    };
+
+    const updatedComments = [...comments, newComment];
+
+    // 4. Update Supabase
+    const { error: updateError } = await _supabase
+        .from('posts')
+        .update({ comments: updatedComments })
+        .eq('id', activePostId);
+
+    // 5. Cleanup
+    isCommenting = false; // Unlock
+    if(btn) btn.disabled = false;
+
+    if (updateError) {
+        return pushNotif("Error posting comment", "danger");
+    }
+
+    input.value = '';
+    renderComments(updatedComments, p.authorEmail);
+    pushNotif("Comment posted!");
+}
+
+function renderComments(comments, ownerEmail) {
+    const container = document.getElementById('comments-container');
+    container.innerHTML = '';
+    
+    comments.slice().reverse().forEach(c => {
+        const isMe = c.email === currentUser;
+        const canMod = isMe || ownerEmail === currentUser;
+        const isAuthor = c.email === ownerEmail;
+
+        container.innerHTML += `
+            <div class="comment" style="position: relative;">
+                <div class="comment-top">
+                    <div class="comment-info">
+                        <span class="comment-user">
+                            @${c.user} ${isAuthor ? '<span title="Author">👑</span>' : ''}
+                        </span>
+                        <span class="comment-date">
+                            ${timeAgo(c.date)} 
+                            ${c.isEdited ? '<span style="font-style: italic; opacity: 0.5; margin-left: 5px;">(Edited)</span>' : ''}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="comment-body" id="text-${c.id}">${c.text}</div>
+
+                <div id="edit-ctrl-${c.id}" class="hidden" style="margin-top: 10px;">
+                    <input type="text" id="input-${c.id}" 
+                        value="${c.text}" 
+                        data-original="${c.text}" 
+                        style="margin:0; font-size:13px; padding: 10px; background: #020617; border: 1px solid var(--primary);">
+                    <div style="display:flex; gap:8px; margin-top:8px;">
+                        <button class="btn btn-primary" style="padding:4px 12px; font-size:11px;" onclick="saveCommentUpdate(${c.id})">Save</button>
+                        <button class="btn" style="padding:4px 12px; font-size:11px; background:#334155; color:white;" onclick="cancelCommentEdit(${c.id})">Cancel</button>
+                    </div>
+                </div>
+
+                ${canMod ? `
+                <div class="comment-menu-btn">
+                    <button class="dropdown-btn" onclick="toggleDrop('c-drop-${c.id}')">⋮</button>
+                    <div id="c-drop-${c.id}" class="dropdown-menu" style="right:0;">
+                        ${isMe ? `<button onclick="editComment(${c.id})">Edit</button>` : ''}
+                        <button onclick="delComment(${c.id})" style="color:var(--danger)">Delete</button>
+                    </div>
+                </div>` : ''}
+            </div>`;
+    });
+}
+
+   async function delComment(commentId) {
+    showConfirm(
+        "Delete Comment?", 
+        "Are you sure you want to remove this? This cannot be undone.", 
+        async () => {
+            // 1. Fetch the latest comments from Supabase to ensure we have the current list
+            const { data: p, error: fetchError } = await _supabase
+                .from('posts')
+                .select('comments, authorEmail')
+                .eq('id', activePostId)
+                .single();
+
+            if (fetchError || !p) return pushNotif("Error syncing comments", "danger");
+
+            // 2. Filter out the comment by its ID
+            const updatedComments = p.comments.filter(c => c.id !== commentId);
+
+            // 3. Update the cloud database
+            const { error: updateError } = await _supabase
+                .from('posts')
+                .update({ comments: updatedComments })
+                .eq('id', activePostId);
+
+            if (updateError) {
+                console.error(updateError);
+                pushNotif("Failed to delete from cloud", "danger");
+            } else {
+                pushNotif("Comment removed", "success");
+                // 4. Update the UI directly
+                renderComments(updatedComments, p.authorEmail);
+            }
+        }
+    );
+}
+
+let isUpdatingComment = false; // Spam lock
+
+function editComment(commentId) {
+    // 1. Close dropdown
+    const menu = document.getElementById(`c-drop-${commentId}`);
+    if (menu) menu.classList.remove('active');
+
+    const textEl = document.getElementById(`text-${commentId}`);
+    const inputEl = document.getElementById(`input-${commentId}`);
+    const ctrlEl = document.getElementById(`edit-ctrl-${commentId}`);
+
+    // 2. THE FIX: Force it to be blank every time they click edit
+    inputEl.value = ""; 
+    inputEl.placeholder = "Type new comment...";
+
+    // 3. Swap UI
+    textEl.classList.add('hidden');
+    ctrlEl.classList.remove('hidden');
+    
+    inputEl.focus();
+}
+
+function cancelCommentEdit(commentId) {
+    document.getElementById(`text-${commentId}`).classList.remove('hidden');
+    document.getElementById(`edit-ctrl-${commentId}`).classList.add('hidden');
+    // Clear it on cancel too just to be safe
+    document.getElementById(`input-${commentId}`).value = "";
+}
+
+async function saveCommentUpdate(commentId) {
+    // 1. Anti-Spam Check
+    if (isUpdatingComment) return;
+
+    const inputEl = document.getElementById(`input-${commentId}`);
+    const newText = inputEl.value.trim();
+
+    if (!newText) return pushNotif("Comment cannot be empty", "warning");
+
+    // 2. Lock and Show Loading
+    isUpdatingComment = true;
+    const saveBtn = document.querySelector(`#edit-ctrl-${commentId} .btn-primary`);
+    const originalBtnText = saveBtn.innerText;
+    saveBtn.innerText = "Saving...";
+
+    try {
+        const { data: p, error: fetchError } = await _supabase
+            .from('posts')
+            .select('comments, authorEmail')
+            .eq('id', activePostId)
+            .single();
+
+        if (fetchError || !p) throw fetchError;
+
+        const updatedComments = p.comments.map(c => {
+            if (c.id === commentId) {
+                return { ...c, text: newText, isEdited: true };
+            }
+            return c;
+        });
+
+        const { error: updateError } = await _supabase
+            .from('posts')
+            .update({ comments: updatedComments })
+            .eq('id', activePostId);
+
+        if (updateError) throw updateError;
+
+        pushNotif("Comment updated!");
+        renderComments(updatedComments, p.authorEmail);
+
+    } catch (err) {
+        console.error(err);
+        pushNotif("Error saving comment", "danger");
+        saveBtn.innerText = originalBtnText; // Re-enable if failed
+    } finally {
+        isUpdatingComment = false;
+    }
+}
+
+  function toggleDrop(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    const isOpen = el.classList.contains('active');
+
+    // Close all other open menus first
+    document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('active'));
+
+    // If it wasn't open, open it now
+    if (!isOpen) {
+        el.classList.add('active');
+    }
+}
+
+
+let confirmCallback = null;
+
+function showConfirm(title, message, onConfirm) {
+    document.getElementById('confirm-title').innerText = title;
+    document.getElementById('confirm-msg').innerText = message;
+    document.getElementById('confirm-modal').classList.remove('hidden');
+    
+    // overwrite the previous function to prevent "ghost" deletions
+    document.getElementById('confirm-yes-btn').onclick = async () => {
+        // Change button state so user knows it's working
+        const btn = document.getElementById('confirm-yes-btn');
+        const originalText = btn.innerText;
+        btn.innerText = "Processing...";
+        btn.disabled = true;
+
+        await onConfirm(); // Run the Supabase delete logic
+        
+        btn.innerText = originalText;
+        btn.disabled = false;
+        closeConfirm();
+    };
+}
+
+function closeConfirm() {
+    document.getElementById('confirm-modal').classList.add('hidden');
+}
+
+// Global Delete Function
+async function deletePost(id) {
+    showConfirm(
+        "Delete Post?", 
+        "Are you sure you want to remove this script? This will delete all likes and comments permanently.", 
+        async () => {
+            // 1. Delete from Supabase
+            const { error } = await _supabase
+                .from('posts')
+                .delete()
+                .eq('id', id);
+
+            if (error) {
+                console.error("Delete error:", error);
+                return pushNotif("Failed to delete from cloud", "danger");
+            }
+
+            // 2. UI Cleanup
+            pushNotif("Script Deleted Successfully", "danger");
+            closeConfirm();
+            
+            // 3. Refresh the feed to show it's gone
+            const activeTab = document.querySelector('.tab-link.active').id.replace('tab-', '');
+            renderFeed(activeTab);
+        }
+    );
+}
+
+  async function editPost(id) {
+    // 1. Show a quick notification so the user knows it's loading
+    pushNotif("Loading script data...", "success");
+
+    // 2. Fetch the latest data from the cloud
+    const { data: p, error } = await _supabase
+        .from('posts')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+    if (error || !p) {
+        console.error("Edit fetch error:", error);
+        return pushNotif("Could not find this script in the database", "danger");
+    }
+
+    // 3. Fill the Upload Form with the Cloud Data
+    document.getElementById('edit-id').value = p.id;
+    document.getElementById('up-title').value = p.title;
+    document.getElementById('up-script').value = p.script;
+    document.getElementById('up-key').value = p.keySystem || "N/A";
+    document.getElementById('up-payment').value = p.payment || "N/A";
+    document.getElementById('up-gameid').value = p.gameId || "";
+    document.getElementById('up-features').value = p.features || "";
+
+    // 4. Update the UI text to show we are in "Edit Mode"
+    document.getElementById('upload-header').innerText = "Edit Script";
+    document.getElementById('upload-btn').innerText = "Update Global Script";
+
+    // 5. Switch to the upload tab
+    switchTab('upload');
+}
+
+    function copyScript() {
+        navigator.clipboard.writeText(document.getElementById('modal-code').innerText);
+        pushNotif("Code Copied!");
+    }
+
+    function closeModal() { document.getElementById('post-modal').classList.add('hidden'); }
+
+    window.onclick = (e) => {
+        if (!e.target.matches('.dropdown-btn')) {
+            document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('active'));
+        }
+    }
+</script>
+</body>
+</html>
