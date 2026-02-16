@@ -208,15 +208,18 @@
 </nav>
 
 <div class="container">
-    <div id="section-auth">
-        <div style="max-width: 400px; margin: 100px auto; background: var(--bg-card); padding: 40px; border-radius: 24px; border: 1px solid var(--border);">
-            <h2 style="text-align:center; margin-top:0;">Dev Login</h2>
-            <input type="email" id="email" placeholder="Email">
-            <input type="password" id="password" placeholder="Password">
-            <button class="btn btn-primary" style="width:100%;" onclick="signup()">Join Community</button>
-            <button class="btn" style="background:none; color:var(--text-muted); width:100%; margin-top:10px;" onclick="login()">Log In</button>
-        </div>
+   <div id="section-auth">
+    <div style="max-width: 400px; margin: 100px auto; background: var(--bg-card); padding: 40px; border-radius: 24px; border: 1px solid var(--border);">
+        <h2 style="text-align:center; margin-top:0;">Dev Community</h2>
+        
+        <input type="text" id="reg-username" placeholder="Username (e.g. ScriptGod)">
+        <input type="email" id="email" placeholder="Email (Private)">
+        <input type="password" id="password" placeholder="Password">
+        
+        <button class="btn btn-primary" style="width:100%;" onclick="signup()">Join Community</button>
+        <button class="btn" style="background:none; color:var(--text-muted); width:100%; margin-top:10px;" onclick="login()">Log In</button>
     </div>
+</div>
 
     <div id="section-feed" class="hidden">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 30px;">
@@ -399,70 +402,87 @@ const toBase64 = file => new Promise((resolve, reject) => {
     }
 }
 
-  function signup() {
+function signup() {
+    const userInput = document.getElementById('reg-username');
     const emailInput = document.getElementById('email');
     const passInput = document.getElementById('password');
     
-    // Trim spaces
-    const e = emailInput.value.trim();
+    const u = userInput.value.trim();
+    const e = emailInput.value.trim().toLowerCase(); 
     const p = passInput.value.trim();
 
-    // 1. Check if empty
+    // --- THE FIX: STRICT BLOCKING ---
+    if (u === "" || u === null || u.length < 1) {
+        return pushNotif("Username cannot be empty!", "danger");
+    }
+
     if (!e || !p) {
-        return pushNotif("Please enter an email and password", "danger");
+        return pushNotif("Email and Password are required", "danger");
     }
 
-    // 2. Simple Email Check (Must have @ and a dot)
-    if (!e.includes('@') || !e.includes('.')) {
-        return pushNotif("Please enter a valid email address", "warning");
+    if (u.length < 3) {
+        return pushNotif("Username is too short (min 3 chars)", "warning");
     }
+    // --------------------------------
 
-    // 3. Password Length
-    if (p.length < 4) {
-        return pushNotif("Password must be at least 4 characters", "warning");
-    }
-
-    // 4. CHECK IF ALREADY REGISTERED
     if (localStorage.getItem(`u_${e}`)) {
-        return pushNotif("Account already exists! Try logging in.", "danger");
+        return pushNotif("Account already exists!", "danger");
     }
 
-    // 5. SUCCESS: Save and Log in
-    localStorage.setItem(`u_${e}`, p);
-    pushNotif("Account Created Successfully!");
+    const userData = { username: u, password: p };
+    localStorage.setItem(`u_${e}`, JSON.stringify(userData));
     
-    // Auto-login logic
-    currentUser = e;
+    // Set Session
     localStorage.setItem('session_user', e);
+    localStorage.setItem('session_username', u);
     
-    // Refresh to enter the app
-    setTimeout(() => {
-        location.reload();
-    }, 800);
+    pushNotif(`Account created: @${u}!`);
+    setTimeout(() => { location.reload(); }, 800);
 }
-   function login() {
-    const e = document.getElementById('email').value.trim();
-    const p = document.getElementById('password').value.trim();
 
-    // 1. Get the stored password for this specific email
-    const storedPassword = localStorage.getItem(`u_${e}`);
+function login() {
+    // 1. Get all three inputs from the login form
+    const uInput = document.getElementById('reg-username').value.trim(); // Username field
+    const eInput = document.getElementById('email').value.trim().toLowerCase();
+    const pInput = document.getElementById('password').value.trim();
 
-    // 2. CHECK: Does the user even exist?
-    if (!storedPassword) {
-        return pushNotif("Account not found. Please sign up first!", "danger");
+    // 2. CHECK: Are any fields empty?
+    if (!uInput || !eInput || !pInput) {
+        return pushNotif("Username, Email, and Password are required to log in!", "warning");
     }
 
-    // 3. CHECK: Does the password match?
-    if (storedPassword === p) {
-        currentUser = e; 
-        localStorage.setItem('session_user', e); 
-        pushNotif("Login successful!", "success");
-        location.reload();
+    // 3. Get the stored data based on the email
+    const storedData = localStorage.getItem(`u_${eInput}`);
+
+    // 4. CHECK: Does the account exist?
+    if (!storedData) {
+        return pushNotif("Account not found. Check your email spelling!", "danger");
+    }
+
+    // 5. PARSE the data to check username and password
+    const user = JSON.parse(storedData);
+
+    // 6. VALIDATION: Check if Username AND Password match
+    if (user.username === uInput && user.password === pInput) {
+        // SUCCESS
+        currentUser = eInput; 
+        localStorage.setItem('session_user', eInput); 
+        localStorage.setItem('session_username', user.username);
+        
+        pushNotif(`Access Granted. Welcome, @${user.username}!`, "success");
+        
+        setTimeout(() => {
+            location.reload();
+        }, 800);
     } else { 
-        pushNotif("Incorrect password!", "danger"); 
+        // FAIL: Either password or username is wrong
+        if (user.username !== uInput) {
+            pushNotif("Username does not match this email!", "danger");
+        } else {
+            pushNotif("Incorrect password!", "danger");
+        }
     }
-}
-    function logout() {
+}    function logout() {
     // 1. Remove the session
     localStorage.removeItem('session_user');
     
@@ -482,18 +502,19 @@ const toBase64 = file => new Promise((resolve, reject) => {
 let isSubmitting = false;
 
 async function savePost() {
-    // 1. Prevent Spam: If already submitting, stop right here
     if (isSubmitting) return;
 
     const title = document.getElementById('up-title').value;
     const script = document.getElementById('up-script').value;
     const editId = document.getElementById('edit-id').value;
     const fileInput = document.getElementById('up-thumb-file');
-  const submitBtn = document.getElementById('upload-btn');
+    const submitBtn = document.getElementById('upload-btn');
+    
+    // Retrieve the actual username we stored during login/signup
+    const currentUsername = localStorage.getItem('session_username') || "Anonymous";
     
     if(!title || !script) return pushNotif("Missing Title/Script", "danger");
 
-    // 2. Lock the function and update Button UI
     isSubmitting = true;
     if (submitBtn) {
         submitBtn.innerText = "Publishing...";
@@ -507,12 +528,13 @@ async function savePost() {
         try {
             thumbData = await toBase64(fileInput.files[0]);
         } catch (err) {
-            isSubmitting = false; // Unlock on error
+            isSubmitting = false; 
             if (submitBtn) submitBtn.innerText = "Publish Script"; 
             return pushNotif("Error processing image", "danger");
         }
     }
 
+    // --- UPDATED POST DATA ---
     const postData = {
         title: title, 
         script: script,
@@ -521,8 +543,8 @@ async function savePost() {
         gameId: document.getElementById('up-gameid').value,
         features: document.getElementById('up-features').value,
         thumb: thumbData,
-        author: currentUser.split('@')[0],
-        authorEmail: currentUser
+        author: currentUsername, // FIX: Uses the real username now
+        authorEmail: currentUser  // Keep this for ownership checks
     };
 
     try {
@@ -543,7 +565,11 @@ async function savePost() {
             pushNotif("Script Published to Community!");
         }
 
-        // 4. Cleanup UI
+        // Reset fields
+        document.getElementById('up-title').value = "";
+        document.getElementById('up-script').value = "";
+        document.getElementById('up-features').value = "";
+        document.getElementById('up-gameid').value = "";
         fileInput.value = "";
         document.getElementById('edit-id').value = ""; 
         switchTab('feed');
@@ -552,7 +578,6 @@ async function savePost() {
         console.error("Supabase Error:", err);
         pushNotif("Database Error: " + err.message, "danger");
     } finally {
-        // 5. UNLOCK: This runs whether the try succeeded OR failed
         isSubmitting = false;
         if (submitBtn) {
             submitBtn.innerText = "Publish Script";
