@@ -899,21 +899,27 @@ async function toggleFav() {
   // Add this at the very top of your script (outside the function)
 let isCommenting = false; 
 
+// Add this at the top of your script tag with your other global variables
+let isCommenting = false; 
+
 async function addComment() {
     if (!currentUser) return pushNotif("Please login to comment", "danger");
-    
-    // Prevent double-clicks while the first one is processing
     if (isCommenting) return; 
 
     const input = document.getElementById('comment-input');
-    const btn = document.querySelector('.comment-submit-btn'); // Make sure your button has a class or ID
+    // Using a generic selector if class isn't present, or update your HTML to include .comment-submit-btn
+    const btn = document.querySelector('.btn-primary[onclick="addComment()"]') || document.querySelector('.comment-submit-btn');
     const val = input.value.trim();
+    
     if (!val) return;
 
-    // 1. Fetch the LATEST comments
-    isCommenting = true; // Lock the function
-    if(btn) btn.disabled = true; // Visually disable button
+    isCommenting = true; 
+    if(btn) {
+        btn.disabled = true;
+        btn.innerText = "...";
+    }
 
+    // 1. Fetch the LATEST comments to ensure we don't overwrite others
     const { data: p, error: fetchError } = await _supabase
         .from('posts')
         .select('comments, authorEmail')
@@ -922,27 +928,29 @@ async function addComment() {
 
     if (fetchError) {
         isCommenting = false;
-        if(btn) btn.disabled = false;
+        if(btn) { btn.disabled = false; btn.innerText = "Post"; }
         return pushNotif("Failed to sync comments", "danger");
     }
 
     const comments = p.comments || [];
 
-    // 2. ANTI-SPAM: Check if the user is posting too fast (5-second cooldown)
+    // 2. ANTI-SPAM (5-second cooldown)
     const myLastComment = [...comments].reverse().find(c => c.email === currentUser);
     if (myLastComment) {
         const timeSinceLast = Date.now() - new Date(myLastComment.date).getTime();
-        if (timeSinceLast < 5000) { // 5000ms = 5 seconds
+        if (timeSinceLast < 5000) { 
             isCommenting = false;
-            if(btn) btn.disabled = false;
-            return pushNotif("Please wait a few seconds before posting again", "warning");
+            if(btn) { btn.disabled = false; btn.innerText = "Post"; }
+            return pushNotif("Wait 5s before posting again", "warning");
         }
     }
 
-    // 3. Create the new comment
+    // 3. Create comment using the STORED username
+    const currentUsername = localStorage.getItem('session_username') || currentUser.split('@')[0];
+    
     const newComment = {
         id: Date.now(),
-        user: currentUser.split('@')[0],
+        user: currentUsername, // FIX: Uses real display name
         email: currentUser,
         text: val,
         date: new Date().toISOString()
@@ -957,8 +965,11 @@ async function addComment() {
         .eq('id', activePostId);
 
     // 5. Cleanup
-    isCommenting = false; // Unlock
-    if(btn) btn.disabled = false;
+    isCommenting = false; 
+    if(btn) { 
+        btn.disabled = false; 
+        btn.innerText = "Post"; 
+    }
 
     if (updateError) {
         return pushNotif("Error posting comment", "danger");
@@ -971,19 +982,25 @@ async function addComment() {
 
 function renderComments(comments, ownerEmail) {
     const container = document.getElementById('comments-container');
+    if (!container) return;
     container.innerHTML = '';
+    
+    if (!comments || comments.length === 0) {
+        container.innerHTML = '<p style="color:var(--text-muted); font-size:13px;">No comments yet.</p>';
+        return;
+    }
     
     comments.slice().reverse().forEach(c => {
         const isMe = c.email === currentUser;
-        const canMod = isMe || ownerEmail === currentUser;
+        const canMod = isMe || (currentUser && ownerEmail === currentUser);
         const isAuthor = c.email === ownerEmail;
 
         container.innerHTML += `
             <div class="comment" style="position: relative;">
                 <div class="comment-top">
                     <div class="comment-info">
-                        <span class="comment-user">
-                            @${c.user} ${isAuthor ? '<span title="Author">👑</span>' : ''}
+                        <span class="comment-user" style="color: ${isAuthor ? 'var(--warning)' : 'var(--primary-light)'}">
+                            @${c.user} ${isAuthor ? '<span title="Script Author">👑</span>' : ''}
                         </span>
                         <span class="comment-date">
                             ${timeAgo(c.date)} 
@@ -997,7 +1014,6 @@ function renderComments(comments, ownerEmail) {
                 <div id="edit-ctrl-${c.id}" class="hidden" style="margin-top: 10px;">
                     <input type="text" id="input-${c.id}" 
                         value="${c.text}" 
-                        data-original="${c.text}" 
                         style="margin:0; font-size:13px; padding: 10px; background: #020617; border: 1px solid var(--primary);">
                     <div style="display:flex; gap:8px; margin-top:8px;">
                         <button class="btn btn-primary" style="padding:4px 12px; font-size:11px;" onclick="saveCommentUpdate(${c.id})">Save</button>
@@ -1006,9 +1022,9 @@ function renderComments(comments, ownerEmail) {
                 </div>
 
                 ${canMod ? `
-                <div class="comment-menu-btn">
+                <div class="comment-menu-btn" style="position: absolute; top: 15px; right: 15px;">
                     <button class="dropdown-btn" onclick="toggleDrop('c-drop-${c.id}')">⋮</button>
-                    <div id="c-drop-${c.id}" class="dropdown-menu" style="right:0;">
+                    <div id="c-drop-${c.id}" class="dropdown-menu" style="right:0; top: 35px;">
                         ${isMe ? `<button onclick="editComment(${c.id})">Edit</button>` : ''}
                         <button onclick="delComment(${c.id})" style="color:var(--danger)">Delete</button>
                     </div>
