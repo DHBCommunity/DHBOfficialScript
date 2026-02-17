@@ -350,22 +350,27 @@ input[type="text"]#login-pass {
 
 <div id="post-modal" class="modal-overlay hidden">
     <div class="modal-content">
-        <button onclick="closeModal()" style="position:absolute; top:20px; right:20px; background:none; border:none; color:white; font-size:28px; cursor:pointer;">&times;</button>
+        <button onclick="closeModal()" style="position:absolute; top:20px; right:20px; background:none; border:none; color:white; font-size:28px; cursor:pointer; z-index: 10;">&times;</button>
+        
+        <div id="modal-thumb-container" style="width: 100%; height: 280px; background: #020617; border-radius: 16px; margin-bottom: 20px; overflow: hidden; border: 1px solid var(--border);">
+            <img id="modal-thumbnail" src="" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+        </div>
+
         <h2 id="modal-title" style="margin:0;"></h2>
         <p id="modal-author" style="color:var(--text-muted); font-size:13px; margin:5px 0 20px 0;"></p>
         
         <div id="modal-tags" style="margin-bottom: 15px;"></div>
 
-      <div class="interaction-row">
-    <button class="stat-btn" id="like-btn" onclick="vote(1)">👍 <span id="modal-likes">0</span></button>
-    <button class="stat-btn" id="dislike-btn" onclick="vote(-1)">👎 <span id="modal-dislikes">0</span></button>
-    
-    <div class="stat-btn" style="cursor: default; opacity: 0.8;">
-        👁️ <span id="modal-views">0</span>
-    </div>
+        <div class="interaction-row">
+            <button class="stat-btn" id="like-btn" onclick="vote(1)">👍 <span id="modal-likes">0</span></button>
+            <button class="stat-btn" id="dislike-btn" onclick="vote(-1)">👎 <span id="modal-dislikes">0</span></button>
+            
+            <div class="stat-btn" style="cursor: default; opacity: 0.8;">
+                👁️ <span id="modal-views">0</span>
+            </div>
 
-    <button class="stat-btn" id="fav-btn" onclick="toggleFav()">⭐ Favorite</button>
-   </div>
+            <button class="stat-btn" id="fav-btn" onclick="toggleFav()">⭐ Favorite</button>
+        </div>
 
         <div class="code-box" id="modal-code"></div>
         
@@ -923,7 +928,7 @@ async function savePost() {
 async function openPost(id) {
     activePostId = id;
     
-    // 1. FETCH FRESH DATA (Auto-refresh from Cloud)
+    // 1. FETCH FRESH DATA
     const { data: p, error } = await _supabase
         .from('posts')
         .select('*')
@@ -932,8 +937,20 @@ async function openPost(id) {
     
     if (error || !p) {
         console.error("Fetch error:", error);
-        return pushNotif("Post not found or cloud sync failed", "danger");
+        return pushNotif("Post not found", "danger");
     }
+
+    // --- THUMBNAIL LOGIC START ---
+    const modalImg = document.getElementById('modal-thumbnail');
+    // Check if p.thumb or p.thumbnail_url exists in your Supabase table
+    const postImage = p.thumb || p.thumbnail_url; 
+    
+    if (postImage && postImage.trim() !== "") {
+        modalImg.src = postImage;
+    } else {
+        modalImg.src = DEFAULT_THUMB;
+    }
+    // --- THUMBNAIL LOGIC END ---
 
     // 2. Global View Counter Logic
     const viewer = currentUser || localStorage.getItem('guest_session') || 'guest';
@@ -941,19 +958,12 @@ async function openPost(id) {
     
     if (!updatedViews.includes(viewer)) {
         updatedViews.push(viewer);
-        
-        // Update database silently
-        await _supabase
-            .from('posts')
-            .update({ views: updatedViews })
-            .eq('id', id);
-            
-        // Background refresh for the feed cards behind the modal
+        await _supabase.from('posts').update({ views: updatedViews }).eq('id', id);
         const activeTabEl = document.querySelector('.tab-link.active');
         renderFeed(activeTabEl ? activeTabEl.id.replace('tab-', '') : 'recent');
     }
 
-    // 3. Update the Modal UI with Fresh Data
+    // 3. Update the Modal UI
     document.getElementById('modal-title').innerText = p.title;
     document.getElementById('modal-author').innerText = `By @${p.author || p.authorEmail.split('@')[0]}`;
     
@@ -961,12 +971,11 @@ async function openPost(id) {
     if(codeEl.tagName === 'TEXTAREA') codeEl.value = p.script;
     else codeEl.innerText = p.script;
     
-    // Stats (Guarantees fresh likes/dislikes/views are shown)
     document.getElementById('modal-likes').innerText = p.likes ? p.likes.length : 0;
     document.getElementById('modal-dislikes').innerText = p.dislikes ? p.dislikes.length : 0;
     document.getElementById('modal-views').innerText = updatedViews.length;
 
-    // 4. Roblox Join Game Link Logic
+    // 4. Tags & Roblox Logic
     const isValidId = p.gameId && !isNaN(p.gameId) && p.gameId.toString().trim() !== "";
     const joinBtnHtml = isValidId 
         ? `<button class="btn" style="background:var(--success); color:white; font-size:12px; padding:4px 12px; margin-left: 10px;" 
@@ -980,10 +989,9 @@ async function openPost(id) {
     `;
 
     // 5. Interaction UI & Comments
-    updateInteractionUI(p); // Highlights Like/Dislike buttons based on fresh data
+    updateInteractionUI(p);
     renderComments(p.comments || [], p.authorEmail);
     
-    // Show modal and prevent scroll
     document.getElementById('post-modal').classList.remove('hidden');
     document.body.style.overflow = 'hidden'; 
 }
