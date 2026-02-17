@@ -1017,7 +1017,7 @@ posts.forEach(p => {
 async function openPost(id) {
     activePostId = id;
 
-    // --- 0. RESET MODAL UI (CRITICAL FIX) ---
+    // --- 0. RESET MODAL UI ---
     document.getElementById('modal-title').innerText = "Loading...";
     document.getElementById('modal-author').innerText = "";
     document.getElementById('modal-thumbnail').src = DEFAULT_THUMB;
@@ -1043,14 +1043,12 @@ async function openPost(id) {
         return pushNotif("Post not found", "danger");
     }
 
-    // --- NEW: URL SHARING LOGIC ---
-    // Create a clean "Slug" from the title (e.g., "Hello World" -> "hello-world")
+    // --- URL SHARING LOGIC ---
     const slug = p.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-    
-    // Update address bar: easyscript.page.gd/?s=123_hello-world
     const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + `?s=${p.id}_${slug}`;
-    window.history.pushState({ path: newUrl }, '', newUrl);
-    // ------------------------------
+    
+    // Updated: Store the ID in the state so "Back" button works
+    window.history.pushState({ postId: p.id }, '', newUrl);
 
     // --- THUMBNAIL LOGIC ---
     const modalImg = document.getElementById('modal-thumbnail');
@@ -1068,7 +1066,7 @@ async function openPost(id) {
         renderFeed(activeTabEl ? activeTabEl.id.replace('tab-', '') : 'recent');
     }
 
-    // 3. Update the Modal UI with Real Data
+    // 3. Update UI
     document.getElementById('modal-title').innerText = p.title;
     document.getElementById('modal-author').innerText = `By @${p.author || p.authorEmail.split('@')[0]}`;
     
@@ -1089,7 +1087,7 @@ async function openPost(id) {
     document.getElementById('modal-dislikes').innerText = p.dislikes ? p.dislikes.length : 0;
     document.getElementById('modal-views').innerText = updatedViews.length;
 
-    // 4. Tags & Roblox Logic
+    // 4. Tags
     const isValidId = p.gameId && !isNaN(p.gameId) && p.gameId.toString().trim() !== "";
     const joinBtnHtml = isValidId 
         ? `<button class="btn" style="background:var(--success); color:white; font-size:12px; padding:4px 12px; margin-left: 10px;" 
@@ -1102,7 +1100,6 @@ async function openPost(id) {
         ${joinBtnHtml}
     `;
 
-    // 5. Interaction UI & Comments
     updateInteractionUI(p);
     document.getElementById('comments-container').innerHTML = ""; 
     renderComments(p.comments || [], p.authorEmail);
@@ -1899,30 +1896,48 @@ function fallbackCopy(text) {
     document.body.removeChild(textArea);
 }
 
-    function closeModal() { document.getElementById('post-modal').classList.add('hidden'); }
+    function closeModal() {
+    // 1. Hide the modal UI
+    document.getElementById('post-modal').classList.add('hidden');
+    
+    // 2. Restore scrolling to the background page
+    document.body.style.overflow = 'auto';
+    
+    // 3. Reset the active post tracking
+    activePostId = null;
+
+    // 4. CLEAN THE URL (Remove the ?s= parameter)
+    // This tells the browser to go back to the main URL without refreshing the page
+    const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+    window.history.pushState({ path: cleanUrl }, '', cleanUrl);
+}
 
     window.onclick = (e) => {
         if (!e.target.matches('.dropdown-btn')) {
             document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('active'));
         }
     }
-// This runs automatically when the page loads
-window.addEventListener('DOMContentLoaded', () => {
-    // 1. Get the parameters from the URL (e.g., ?s=123_cool-script)
-    const urlParams = new URLSearchParams(window.location.search);
-    const scriptParam = urlParams.get('s');
 
-    if (scriptParam) {
-        // 2. Extract just the ID (the numbers before the underscore)
-        const id = scriptParam.split('_')[0];
-        
-        if (id) {
-            console.log("Found ID in URL, opening post:", id);
-            // 3. Trigger your existing function
-            openPost(id);
-        }
+window.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const s = urlParams.get('s');
+    if (s) {
+        const id = s.split('_')[0]; // Extract the ID
+        if (id) setTimeout(() => openPost(id), 500); // Small delay for Supabase
     }
 });
+
+window.addEventListener('popstate', (event) => {
+    if (event.state && event.state.postId) {
+        openPost(event.state.postId);
+    } else {
+        // If no state, close the modal
+        document.getElementById('post-modal').classList.add('hidden');
+        document.body.style.overflow = 'auto';
+        activePostId = null;
+    }
+});
+
 </script>
 </body>
 </html>
