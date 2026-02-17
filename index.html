@@ -627,7 +627,7 @@ function previewUploadImage(input) {
     }
 }
 
-function signup() {
+async function signup() {
     const userInput = document.getElementById('reg-username');
     const emailInput = document.getElementById('email');
     const passInput = document.getElementById('password');
@@ -636,51 +636,61 @@ function signup() {
     const e = emailInput.value.trim().toLowerCase(); 
     const p = passInput.value.trim();
 
-    // --- 1. PROFANITY & GIBBERISH FILTER ---
-    const badWords = ['swear1', 'swear2', 'admin', 'moderator']; // Add words you want to block
+    // --- 1. FILTERS & VALIDATION ---
+    const badWords = ['admin', 'moderator', 'staff', 'owner']; 
     const isBadUser = badWords.some(word => u.toLowerCase().includes(word));
     
-    if (isBadUser) {
-        return pushNotif("This username is not allowed.", "danger");
-    }
+    if (isBadUser) return pushNotif("This username is not allowed.", "danger");
 
-    // --- 2. VALID EMAIL CHECK (No more "dfifjijit") ---
-    // This regex ensures it looks like name@domain.com
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(e)) {
-        return pushNotif("Please enter a valid email address.", "danger");
-    }
+    if (!emailRegex.test(e)) return pushNotif("Please enter a valid email address.", "danger");
 
-    // --- 3. PASSWORD STRENGTH ---
-    if (p.length < 6) {
-        return pushNotif("Password must be at least 6 characters.", "warning");
-    }
+    if (p.length < 6) return pushNotif("Password must be at least 6 characters.", "warning");
 
-    // --- 4. USERNAME RULES ---
-    if (u.length < 3 || u.length > 15) {
-        return pushNotif("Username must be 3-15 characters.", "warning");
-    }
+    if (u.length < 3 || u.length > 15) return pushNotif("Username must be 3-15 characters.", "warning");
     
-    // Only allow letters, numbers, and underscores (no weird symbols)
     const userRegex = /^[a-zA-Z0-9_]+$/;
-    if (!userRegex.test(u)) {
-        return pushNotif("Username can only contain letters, numbers, and underscores.", "danger");
-    }
+    if (!userRegex.test(u)) return pushNotif("Username can only contain letters, numbers, and underscores.", "danger");
 
-    // --- EXISTING LOGIC: DATABASE CHECK ---
-    if (localStorage.getItem(`u_${e}`)) {
-        return pushNotif("Account already exists!", "danger");
-    }
+    // --- 2. GLOBAL DATABASE CHECK (The Fix) ---
+    // We check Supabase to see if the Email OR the Username is already taken
+    try {
+        const { data: existingUser, error: fetchError } = await _supabase
+            .from('users') // Make sure your table is named 'users'
+            .select('email, username')
+            .or(`email.eq.${e},username.eq.${u}`)
+            .maybeSingle();
 
-    const userData = { username: u, password: p };
-    localStorage.setItem(`u_${e}`, JSON.stringify(userData));
-    
-    // Set Session
-    localStorage.setItem('session_user', e);
-    localStorage.setItem('session_username', u);
-    
-    pushNotif(`Welcome, @${u}!`);
-    setTimeout(() => { location.reload(); }, 800);
+        if (fetchError) throw fetchError;
+
+        if (existingUser) {
+            if (existingUser.email === e) return pushNotif("Email already registered!", "danger");
+            if (existingUser.username === u) return pushNotif("Username is already taken!", "danger");
+        }
+
+        // --- 3. CREATE ACCOUNT IN CLOUD ---
+        const { error: insertError } = await _supabase
+            .from('users')
+            .insert([{ 
+                email: e, 
+                username: u, 
+                password: p, // Suggestion: Use Supabase Auth for encrypted passwords later
+                created_at: new Date() 
+            }]);
+
+        if (insertError) throw insertError;
+
+        // --- 4. SET LOCAL SESSION ---
+        localStorage.setItem('session_user', e);
+        localStorage.setItem('session_username', u);
+        
+        pushNotif(`Welcome, @${u}!`);
+        setTimeout(() => { location.reload(); }, 800);
+
+    } catch (err) {
+        console.error("Signup Error:", err);
+        pushNotif("Database Error: " + err.message, "danger");
+    }
 }
 
 function togglePassword() {
@@ -710,7 +720,7 @@ function togglePassword() {
     }
 }
 
-function login() {
+async function login() {
     // 1. Get inputs
     const uInput = document.getElementById('reg-username').value.trim();
     const eInput = document.getElementById('email').value.trim().toLowerCase();
@@ -721,69 +731,69 @@ function login() {
         return pushNotif("All fields are required to access your account.", "warning");
     }
 
-    // 3. Email format check (Prevents trying to login with gibberish)
+    // 3. Email format check
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(eInput)) {
         return pushNotif("That doesn't look like a valid email.", "danger");
     }
 
-    // 4. Retrieve account
-    const storedData = localStorage.getItem(`u_${eInput}`);
-
-    if (!storedData) {
-        return pushNotif("No account linked to this email.", "danger");
-    }
-
-    // 5. Verify credentials
     try {
-        const user = JSON.parse(storedData);
+        // 4. GLOBAL DATABASE CHECK
+        // We look for a user where the email matches AND the password matches
+        const { data: user, error } = await _supabase
+            .from('users')
+            .select('*')
+            .eq('email', eInput)
+            .eq('password', pInput) // In the future, use Supabase Auth for better security
+            .maybeSingle();
 
-        // Professional check: Case-insensitive username check is safer
-        const usernameMatches = user.username.toLowerCase() === uInput.toLowerCase();
-        const passwordMatches = user.password === pInput;
+        if (error) throw error;
 
-        if (usernameMatches && passwordMatches) {
-            // LOGIN SUCCESS
-            currentUser = eInput; 
-            localStorage.setItem('session_user', eInput); 
-            localStorage.setItem('session_username', user.username);
-            
-            pushNotif(`Success! Welcome back, @${user.username}`, "success");
-            
-            setTimeout(() => {
-                location.reload();
-            }, 800);
-        } else { 
-            // LOGIN FAIL
-            if (!usernameMatches) {
-                pushNotif("Username does not match our records.", "danger");
-            } else {
-                pushNotif("Invalid password. Please try again.", "danger");
-            }
-            
-            // Optional: Clear password field on fail for security
-            document.getElementById('password').value = "";
+        // 5. VERIFY RESULTS
+        if (!user) {
+            return pushNotif("Invalid email or password.", "danger");
         }
+
+        // Verify username matches (case-insensitive)
+        if (user.username.toLowerCase() !== uInput.toLowerCase()) {
+            return pushNotif("Username does not match our records.", "danger");
+        }
+
+        // --- LOGIN SUCCESS ---
+        // Save session data to the current device's localStorage
+        currentUser = eInput; 
+        localStorage.setItem('session_user', eInput); 
+        localStorage.setItem('session_username', user.username);
+        
+        pushNotif(`Success! Welcome back, @${user.username}`, "success");
+        
+        setTimeout(() => {
+            location.reload();
+        }, 800);
+
     } catch (err) {
         console.error("Login Error:", err);
-        pushNotif("An error occurred during login.", "danger");
+        pushNotif("An error occurred during login: " + err.message, "danger");
     }
 }
 
    function logout() {
-    // 1. Remove the session
-    localStorage.removeItem('session_user');
+    // 1. Fully clear the local session data
+    localStorage.removeItem('session_user');     // Removes email
+    localStorage.removeItem('session_username'); // Removes the display name
     
-    // 2. Clear the local variable so functions like toggleFav() stop working immediately
+    // 2. Clear global variables
     currentUser = null;
+    // If you have a global variable for username, clear it here too
+    // currentUsername = null; 
     
-    // 3. Optional: Push a notification so the user sees it's happening
+    // 3. UI Feedback
     pushNotif("Logged out successfully", "success");
     
-    // 4. Refresh to reset the UI state
+    // 4. Refresh to reset the UI and clear any sensitive data from memory
     setTimeout(() => {
         location.reload();
-    }, 500); // Small delay to let the notification show
+    }, 500); 
 }
 
 // Add this outside the function to track state
