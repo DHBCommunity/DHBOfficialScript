@@ -1043,14 +1043,14 @@ async function openPost(id) {
         return pushNotif("Post not found", "danger");
     }
 
-    // --- URL & SEO LOGIC (FOR SHARING) ---
+    // --- NEW: URL SHARING LOGIC ---
+    // Create a clean "Slug" from the title (e.g., "Hello World" -> "hello-world")
     const slug = p.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    
+    // Update address bar: easyscript.page.gd/?s=123_hello-world
     const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + `?s=${p.id}_${slug}`;
     window.history.pushState({ path: newUrl }, '', newUrl);
-    
-    // Update tab title and Meta tags for previews
-    document.title = `${p.title} | EasyScript`;
-    updateMetaTags(p);
+    // ------------------------------
 
     // --- THUMBNAIL LOGIC ---
     const modalImg = document.getElementById('modal-thumbnail');
