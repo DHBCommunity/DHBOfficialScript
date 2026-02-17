@@ -1847,26 +1847,56 @@ async function editPost(id) {
     upBtn.style.background = "var(--success)"; 
 }
 
-    function copyScript() {
-    // 1. Target the correct ID
+  function copyScript() {
     const codeBox = document.getElementById('modal-code');
-    
-    // 2. Grab the text (innerText preserves the Lua formatting/lines)
-    const textToCopy = codeBox.innerText;
+    // Grab text from innerText (for formatting) or value (if it's a textarea)
+    const textToCopy = codeBox.value || codeBox.innerText;
 
-    if (!textToCopy) {
+    if (!textToCopy || textToCopy === "Loading script...") {
         pushNotif("Error: No script found!", "danger");
         return;
     }
 
-    // 3. Execute copy
-    navigator.clipboard.writeText(textToCopy).then(() => {
-        // Only show success if the browser actually confirms the write
-        pushNotif("Code Copied!");
-    }).catch(err => {
-        console.error("Clipboard error:", err);
-        pushNotif("Copy failed! Use HTTPS or a modern browser.", "danger");
-    });
+    // 1. Try the Modern API (HTTPS only)
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            pushNotif("Code Copied!");
+        }).catch(err => {
+            console.error("Modern copy failed, trying fallback...");
+            fallbackCopy(textToCopy);
+        });
+    } else {
+        // 2. Use Fallback for HTTP or older browsers
+        fallbackCopy(textToCopy);
+    }
+}
+
+// The "Invisible Textarea" Trick
+function fallbackCopy(text) {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    
+    // Ensure it's not visible but exists in the DOM
+    textArea.style.position = "fixed";
+    textArea.style.left = "-9999px";
+    textArea.style.top = "0";
+    document.body.appendChild(textArea);
+    
+    textArea.focus();
+    textArea.select();
+
+    try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+            pushNotif("Code Copied!");
+        } else {
+            pushNotif("Copy failed!", "danger");
+        }
+    } catch (err) {
+        pushNotif("Manual copy required!", "danger");
+    }
+
+    document.body.removeChild(textArea);
 }
 
     function closeModal() { document.getElementById('post-modal').classList.add('hidden'); }
