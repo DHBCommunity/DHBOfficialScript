@@ -327,10 +327,11 @@ input[type="text"]#login-pass {
                 <input type="text" id="up-gameid" placeholder="e.g. 155615604" style="width: 100%; background: #0a0a0a; border: 1px solid #222; border-radius: 10px; padding: 12px; color: #fff;">
             </div>
 
-            <div>
-                <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; display: block;">FEATURES / DESCRIPTION</label>
-                <input type="text" id="up-features" placeholder="e.g. Made by Blaze, Auto-farm, ESP" style="width: 100%; background: #0a0a0a; border: 1px solid #222; border-radius: 10px; padding: 12px; color: #fff;">
-            </div>
+           <div>
+    <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; display: block;">FEATURES / DESCRIPTION</label>
+    <textarea id="up-features" placeholder="• Auto-farm&#10;• ESP & Aimbot&#10;• Made by Blaze" 
+        style="width: 100%; height: 80px; background: #0a0a0a; border: 1px solid #222; border-radius: 10px; padding: 12px; color: #fff; font-family: inherit; font-size: 13px; resize: none;"></textarea>
+</div>
         </div>
 
         <div style="margin: 25px 0;">
@@ -411,10 +412,10 @@ input[type="text"]#login-pass {
             <button class="stat-btn" id="fav-btn" onclick="toggleFav()">⭐ Favorite</button>
         </div>
 
-        <div id="modal-description-box" style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 20px;">
-            <label style="font-size: 10px; color: var(--primary-light); font-weight: 800; text-transform: uppercase; display: block; margin-bottom: 5px; letter-spacing: 0.5px;">Script Features & Description</label>
-            <div id="modal-features-text" style="font-size: 14px; color: var(--text-main); line-height: 1.5; white-space: pre-wrap;"></div>
-        </div>
+       <div id="modal-description-box" style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 20px;">
+    <label style="font-size: 10px; color: var(--primary-light); font-weight: 800; text-transform: uppercase; display: block; margin-bottom: 5px; letter-spacing: 0.5px;">Script Features & Description</label>
+    <div id="modal-features-text" style="font-size: 14px; color: var(--text-main); line-height: 1.5; white-space: pre-wrap; word-break: break-word;"></div>
+</div>
 
         <div class="code-box" id="modal-code"></div>
         
