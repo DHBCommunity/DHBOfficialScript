@@ -1016,7 +1016,20 @@ posts.forEach(p => {
 
 async function openPost(id) {
     activePostId = id;
+
+    // --- 0. RESET MODAL UI (CRITICAL FIX) ---
+    document.getElementById('modal-title').innerText = "Loading...";
+    document.getElementById('modal-author').innerText = "";
+    document.getElementById('modal-thumbnail').src = DEFAULT_THUMB;
+    document.getElementById('modal-code').innerText = "Loading script...";
+    document.getElementById('modal-features-text').innerText = "";
+    document.getElementById('modal-tags').innerHTML = "";
+    document.getElementById('comments-container').innerHTML = '<p style="color:var(--text-muted); padding:20px;">Loading comments...</p>';
+    document.getElementById('comment-input').value = ""; 
     
+    document.getElementById('post-modal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+
     // 1. FETCH FRESH DATA
     const { data: p, error } = await _supabase
         .from('posts')
@@ -1026,19 +1039,23 @@ async function openPost(id) {
     
     if (error || !p) {
         console.error("Fetch error:", error);
+        closeModal(); 
         return pushNotif("Post not found", "danger");
     }
 
-    // --- THUMBNAIL LOGIC START ---
+    // --- NEW: URL SHARING LOGIC ---
+    // Create a clean "Slug" from the title (e.g., "Hello World" -> "hello-world")
+    const slug = p.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    
+    // Update address bar: easyscript.page.gd/?s=123_hello-world
+    const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + `?s=${p.id}_${slug}`;
+    window.history.pushState({ path: newUrl }, '', newUrl);
+    // ------------------------------
+
+    // --- THUMBNAIL LOGIC ---
     const modalImg = document.getElementById('modal-thumbnail');
     const postImage = p.thumb || p.thumbnail_url; 
-    
-    if (postImage && postImage.trim() !== "") {
-        modalImg.src = postImage;
-    } else {
-        modalImg.src = DEFAULT_THUMB;
-    }
-    // --- THUMBNAIL LOGIC END ---
+    modalImg.src = (postImage && postImage.trim() !== "") ? postImage : DEFAULT_THUMB;
 
     // 2. Global View Counter Logic
     const viewer = currentUser || localStorage.getItem('guest_session') || 'guest';
@@ -1051,19 +1068,17 @@ async function openPost(id) {
         renderFeed(activeTabEl ? activeTabEl.id.replace('tab-', '') : 'recent');
     }
 
-    // 3. Update the Modal UI
+    // 3. Update the Modal UI with Real Data
     document.getElementById('modal-title').innerText = p.title;
     document.getElementById('modal-author').innerText = `By @${p.author || p.authorEmail.split('@')[0]}`;
     
-    // --- FEATURES / DESCRIPTION LOGIC ---
     const featuresBox = document.getElementById('modal-description-box');
     const featuresText = document.getElementById('modal-features-text');
-    
     if (p.features && p.features.trim() !== "") {
         featuresText.innerText = p.features;
-        featuresBox.style.display = "block"; // Show if there is content
+        featuresBox.style.display = "block";
     } else {
-        featuresBox.style.display = "none";  // Hide if empty
+        featuresBox.style.display = "none";
     }
 
     const codeEl = document.getElementById('modal-code');
@@ -1089,10 +1104,8 @@ async function openPost(id) {
 
     // 5. Interaction UI & Comments
     updateInteractionUI(p);
+    document.getElementById('comments-container').innerHTML = ""; 
     renderComments(p.comments || [], p.authorEmail);
-    
-    document.getElementById('post-modal').classList.remove('hidden');
-    document.body.style.overflow = 'hidden'; 
 }
 
 // 1. Add this variable at the very top of your script file (Global Scope)
@@ -1397,17 +1410,25 @@ function renderComments(comments, ownerEmail) {
     const container = document.getElementById('comments-container');
     if (!container) return;
     
-    // Clear current view
+    // 1. CLEAR VIEW IMMEDIATELY
     container.innerHTML = '';
     
-    // 1. Handle Empty State
+    // 2. HANDLE EMPTY STATE
     if (!comments || comments.length === 0) {
-        container.innerHTML = '<p style="color:var(--text-muted); font-size:13px; text-align:center; padding:20px;">No comments yet. Be the first to speak!</p>';
+        container.innerHTML = `
+            <p style="color:var(--text-muted); font-size:13px; text-align:center; padding:40px; opacity:0.6;">
+                No comments yet. Be the first to speak!
+            </p>`;
         return;
     }
     
-    // 2. Sort and Render (Newest first)
-    comments.slice().reverse().forEach(c => {
+    // 3. BUILD HTML STRING (Faster than innerHTML +=)
+    let commentsHtml = '';
+    
+    // Sort Newest first
+    const sortedComments = [...comments].reverse();
+
+    sortedComments.forEach(c => {
         // PERMISSIONS & IDENTITY CHECKS
         const isMe = c.email === currentUser;
         const isAuthor = c.email === ownerEmail;
@@ -1417,7 +1438,7 @@ function renderComments(comments, ownerEmail) {
         const crownHtml = isAuthor ? `<span title="Post Owner" style="cursor:help; margin-left:4px; filter: drop-shadow(0 0 2px gold);">👑</span>` : '';
         const youTagHtml = isMe ? `<span style="font-size: 10px; background: var(--primary); color: white; padding: 2px 6px; border-radius: 4px; margin-left: 6px; vertical-align: middle; font-weight: bold; letter-spacing: 0.5px;">YOU</span>` : '';
 
-        container.innerHTML += `
+        commentsHtml += `
             <div class="comment" style="position: relative; padding: 15px; border-bottom: 1px solid #1e293b;">
                 <div class="comment-top">
                     <div class="comment-info">
@@ -1450,12 +1471,15 @@ function renderComments(comments, ownerEmail) {
                 <div class="comment-menu-btn" style="position: absolute; top: 12px; right: 12px;">
                     <button class="dropdown-btn" style="background:transparent; border:none; color:var(--text-muted); cursor:pointer; font-size:18px;" onclick="toggleDrop('c-drop-${c.id}')">⋮</button>
                     <div id="c-drop-${c.id}" class="dropdown-menu" style="right: 0; top: 30px; min-width: 100px;">
-                        ${isMe ? `<button onclick="editComment(${c.id})" style="width:100%; text-align:left;">Edit</button>` : ''}
-                        <button onclick="delComment(${c.id})" style="width:100%; text-align:left; color: var(--danger)">Delete</button>
+                        ${isMe ? `<button onclick="editComment(${c.id})" style="width:100%; text-align:left; padding:8px 12px;">Edit</button>` : ''}
+                        <button onclick="delComment(${c.id})" style="width:100%; text-align:left; padding:8px 12px; color: var(--danger)">Delete</button>
                     </div>
                 </div>` : ''}
             </div>`;
     });
+
+    // 4. INJECT EVERYTHING ONCE
+    container.innerHTML = commentsHtml;
 }
 
    /**
@@ -1786,10 +1810,8 @@ async function deletePost(id) {
  * @param {string|number} id - The unique ID of the post to edit.
  */
 async function editPost(id) {
-    // 1. Show a quick notification so the user knows it's loading
-    pushNotif("Loading script data...", "success");
+    pushNotif("Fetching script data...", "success");
 
-    // 2. Fetch the latest data from the cloud
     const { data: p, error } = await _supabase
         .from('posts')
         .select('*')
@@ -1797,37 +1819,55 @@ async function editPost(id) {
         .single();
 
     if (error || !p) {
-        console.error("Edit fetch error:", error);
-        return pushNotif("Could not find this script in the database", "danger");
+        return pushNotif("Error loading data", "danger");
     }
 
-    // 3. Fill the Upload Form with the Cloud Data
-    // Ensure you have a hidden input: <input type="hidden" id="edit-id">
+    // --- TEST: See if data exists in console ---
+    console.log("Post data found:", p);
+
+    // 1. Switch tab FIRST (This prevents the tab-switcher from wiping your data)
+    switchTab('upload');
+
+    // 2. Load the data into the boxes
+    // Use .value for input/textarea and .innerText for divs
     document.getElementById('edit-id').value = p.id;
-    document.getElementById('up-title').value = p.title;
-    document.getElementById('up-script').value = p.script;
+    document.getElementById('up-title').value = p.title || "";
+    document.getElementById('up-script').value = p.script || "";
+    document.getElementById('up-features').value = p.features || "";
+    
+    // Roblox / Key logic
     document.getElementById('up-key').value = p.keySystem || "N/A";
     document.getElementById('up-payment').value = p.payment || "N/A";
     document.getElementById('up-gameid').value = p.gameId || "";
-    document.getElementById('up-features').value = p.features || "";
 
-    // 4. Update the UI text to show we are in "Edit Mode"
-    document.getElementById('upload-header').innerText = "Edit Script";
-    
+    // 3. UI Labels
+    document.getElementById('upload-header').innerText = "Editing: " + (p.title || "Script");
     const upBtn = document.getElementById('upload-btn');
-    upBtn.innerText = "Update Global Script";
-    
-    // Optional: Add a visual cue (color change) to the button so user knows they are editing
+    upBtn.innerText = "Save Changes";
     upBtn.style.background = "var(--success)"; 
-
-    // 5. Switch to the upload tab
-    switchTab('upload');
 }
 
     function copyScript() {
-        navigator.clipboard.writeText(document.getElementById('modal-code').innerText);
-        pushNotif("Code Copied!");
+    // 1. Target the correct ID
+    const codeBox = document.getElementById('modal-code');
+    
+    // 2. Grab the text (innerText preserves the Lua formatting/lines)
+    const textToCopy = codeBox.innerText;
+
+    if (!textToCopy) {
+        pushNotif("Error: No script found!", "danger");
+        return;
     }
+
+    // 3. Execute copy
+    navigator.clipboard.writeText(textToCopy).then(() => {
+        // Only show success if the browser actually confirms the write
+        pushNotif("Code Copied!");
+    }).catch(err => {
+        console.error("Clipboard error:", err);
+        pushNotif("Copy failed! Use HTTPS or a modern browser.", "danger");
+    });
+}
 
     function closeModal() { document.getElementById('post-modal').classList.add('hidden'); }
 
