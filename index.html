@@ -33,6 +33,32 @@
     z-index: 10;
 }
 
+/* Layout Fix: Post Time Stamp */
+.post-time-stamp {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-main);
+    background: rgba(15, 23, 42, 0.7); /* Dark glass effect */
+    padding: 4px 8px;
+    border-radius: 6px;
+    backdrop-filter: blur(4px);
+    z-index: 5;
+    pointer-events: none;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+/* Ensure the thumb-wrapper can contain absolute elements */
+.thumb-wrapper {
+    position: relative; 
+    height: 180px;
+    background: #020617;
+    border-radius: 16px 16px 0 0;
+    overflow: hidden;
+}
+
 .owner-badge {
     background: var(--primary);
     color: white;
@@ -876,58 +902,63 @@ async function savePost() {
         return;
     }
 
-    // 5. Render Global Post Cards
-    posts.forEach(p => {
-        const isOwner = p.authorEmail === currentUser;
-        const isSaved = (p.favorites || []).includes(currentUser);
+   // 5. Render Global Post Cards
+posts.forEach(p => {
+    const isOwner = p.authorEmail === currentUser;
+    const isSaved = (p.favorites || []).includes(currentUser);
 
-        const viewCount = p.views ? p.views.length : 0;
-        const likeCount = p.likes ? p.likes.length : 0;
-        const dislikeCount = p.dislikes ? p.dislikes.length : 0;
+    // Get the dynamic "time ago" string
+    const timeDisplay = p.created_at ? timeAgo(p.created_at) : "Just now";
 
-        grid.innerHTML += `
-            <div class="script-card" onclick="openPost(${p.id})">
-                <div class="badge-container">
-                    ${isOwner ? '<div class="owner-badge">Your Post</div>' : ''}
-                    ${isSaved ? '<div class="saved-badge">⭐ Saved</div>' : ''}
-                </div>
+    const viewCount = p.views ? p.views.length : 0;
+    const likeCount = p.likes ? p.likes.length : 0;
+    const dislikeCount = p.dislikes ? p.dislikes.length : 0;
 
-                <div class="thumb-wrapper">
-                    <img src="${p.thumb}" class="thumb-img" onerror="this.src='${DEFAULT_THUMB}'">
-                </div>
+    grid.innerHTML += `
+        <div class="script-card" onclick="openPost(${p.id})">
+            <div class="badge-container">
+                ${isOwner ? '<div class="owner-badge">Your Post</div>' : ''}
+                ${isSaved ? '<div class="saved-badge">⭐ Saved</div>' : ''}
+            </div>
+
+            <div class="thumb-wrapper">
+                <div class="post-time-stamp">${timeDisplay}</div>
                 
-                <div class="card-content">
-                    <div style="font-weight:700; color:var(--text-main);">${p.title}</div>
-                    
-                    <div style="margin-top:8px; display:flex; gap:5px; align-items:center;">
-                        <span class="tag-pill">${p.keySystem || 'N/A'}</span>
-                        <span class="tag-pill">${p.payment || 'N/A'}</span>
-                    </div>
-
-                    <div style="margin-top:12px; display:flex; gap:10px; font-size:11px; color:var(--text-muted);">
-                        <span title="Views">👁️ <span id="v-count-${p.id}">${viewCount}</span></span>
-                        <span title="Likes">👍 <span id="l-count-${p.id}">${likeCount}</span></span>
-                        <span title="Dislikes">👎 <span id="d-count-${p.id}">${dislikeCount}</span></span>
-                    </div>
-
-                    <div style="font-size:11px; color:var(--text-muted); margin-top:10px; display:flex; align-items:center; gap:5px;">
-                        <div style="width:18px; height:18px; background:var(--primary); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:8px; color:white;">
-                            ${p.author ? p.author[0].toUpperCase() : '?'}
-                        </div>
-                        @${p.author}
-                    </div>
+                <img src="${p.thumb}" class="thumb-img" onerror="this.src='${DEFAULT_THUMB}'">
+            </div>
+            
+            <div class="card-content">
+                <div style="font-weight:700; color:var(--text-main);">${p.title}</div>
+                
+                <div style="margin-top:8px; display:flex; gap:5px; align-items:center;">
+                    <span class="tag-pill">${p.keySystem || 'N/A'}</span>
+                    <span class="tag-pill">${p.payment || 'N/A'}</span>
                 </div>
 
-                ${isOwner ? `
-                <div class="comment-menu-btn" onclick="event.stopPropagation()">
-                    <button class="dropdown-btn" onclick="toggleDrop('drop-${p.id}')">⋮</button>
-                    <div id="drop-${p.id}" class="dropdown-menu">
-                        <button onclick="editPost(${p.id})">Edit Script</button>
-                        <button onclick="deletePost(${p.id})" style="color:var(--danger)">Delete Permanent</button>
+                <div style="margin-top:12px; display:flex; gap:10px; font-size:11px; color:var(--text-muted);">
+                    <span title="Views">👁️ <span id="v-count-${p.id}">${viewCount}</span></span>
+                    <span title="Likes">👍 <span id="l-count-${p.id}">${likeCount}</span></span>
+                    <span title="Dislikes">👎 <span id="d-count-${p.id}">${dislikeCount}</span></span>
+                </div>
+
+                <div style="font-size:11px; color:var(--text-muted); margin-top:10px; display:flex; align-items:center; gap:5px;">
+                    <div style="width:18px; height:18px; background:var(--primary); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:8px; color:white;">
+                        ${p.author ? p.author[0].toUpperCase() : '?'}
                     </div>
-                </div>` : ''}
-            </div>`;
-    });
+                    @${p.author}
+                </div>
+            </div>
+
+            ${isOwner ? `
+            <div class="comment-menu-btn" onclick="event.stopPropagation()">
+                <button class="dropdown-btn" onclick="toggleDrop('drop-${p.id}')">⋮</button>
+                <div id="drop-${p.id}" class="dropdown-menu">
+                    <button onclick="editPost(${p.id})">Edit Script</button>
+                    <button onclick="deletePost(${p.id})" style="color:var(--danger)">Delete Permanent</button>
+                </div>
+            </div>` : ''}
+        </div>`;
+});
 }
 
 async function openPost(id) {
