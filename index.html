@@ -44,6 +44,21 @@
     box-shadow: 0 4px 10px rgba(0,0,0,0.3);
 }
 
+#toggle-btn {
+    transition: all 0.2s ease;
+    opacity: 0.7;
+}
+
+#toggle-btn:hover {
+    opacity: 1;
+    transform: translateY(-50%) scale(1.1) !important;
+}
+
+/* Optional: Subtle glow when password is shown */
+input[type="text"]#login-pass {
+    border-color: var(--primary) !important;
+}
+
 /* Redefining your saved-badge slightly for consistency */
 .saved-badge {
     position: static !important; /* Overrides absolute to work in flex container */
@@ -206,18 +221,93 @@
         <a id="logout-btn" class="tab-link hidden" onclick="logout()" style="color: var(--danger);">Logout</a>
     </div>
 </nav>
+<div id="section-auth" class="hidden" style="display: flex; align-items: center; justify-content: center; min-height: calc(100vh - 80px); width: 100%;">
+    
+    <div style="max-width: 400px; width: 90%; background: var(--bg-card); padding: 40px; border-radius: 20px; border: 1px solid var(--border); box-shadow: 0 20px 50px rgba(0,0,0,0.5); margin: auto;">
+        
+        <div style="text-align: center; margin-bottom: 30px;">
+            <div style="background: var(--primary); width: 50px; height: 50px; border-radius: 12px; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; font-size: 24px;">D</div>
+            <h2 style="margin:0; font-size: 24px; font-weight: 700; color: white;">Welcome back</h2>
+            <p style="color: var(--text-muted); font-size: 14px; margin-top: 5px;">Enter your details to access the community.</p>
+        </div>
+        
+        <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px;">USERNAME</label>
+        <input type="text" id="reg-username" placeholder="ScriptGod" style="width: 100%; margin-bottom: 15px; background: #0a0a0a; border: 1px solid #222; border-radius: 10px; padding: 12px; color: #fff;">
+        
+        <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px;">EMAIL ADDRESS</label>
+        <input type="email" id="email" placeholder="name@example.com" style="width: 100%; margin-bottom: 15px; background: #0a0a0a; border: 1px solid #222; border-radius: 10px; padding: 12px; color: #fff;">
 
-<div class="container">
-   <div id="section-auth">
-    <div style="max-width: 400px; margin: 100px auto; background: var(--bg-card); padding: 40px; border-radius: 24px; border: 1px solid var(--border);">
-        <h2 style="text-align:center; margin-top:0;">Dev Community</h2>
+        <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px;">PASSWORD</label>
+        <div style="position: relative; width: 100%; margin-bottom: 25px;">
+            <input type="password" id="password" placeholder="••••••••" style="width: 100%; padding-right: 45px !important; background: #0a0a0a; border: 1px solid #222; border-radius: 10px; padding: 12px; color: #fff;">
+            <div onclick="togglePassword()" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; opacity: 0.6;">
+                <svg id="eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </div>
+        </div>
         
-        <input type="text" id="reg-username" placeholder="Username (e.g. ScriptGod)">
-        <input type="email" id="email" placeholder="Email (Private)">
-        <input type="password" id="password" placeholder="Password">
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            <button class="btn btn-primary" style="width:100%; padding: 14px; border-radius: 8px; font-weight: 600; background: var(--primary); color: white; border: none; cursor: pointer;" onclick="signup()">Create Account</button>
+            <button class="btn btn-primary" style="width:100%; padding: 14px; border-radius: 8px; font-weight: 600; background: var(--primary); color: white; border: none; cursor: pointer;" onclick="login()">Log In</button>
+        </div>
+
+    </div>
+</div>
+  <div id="section-upload" class="hidden" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; z-index: 1000; overflow-y: auto; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px);">
+    
+    <div style="max-width: 850px; width: 95%; background: var(--bg-card); padding: 40px; border-radius: 24px; border: 1px solid var(--border); box-shadow: 0 20px 50px rgba(0,0,0,0.5); margin: auto;">
         
-        <button class="btn btn-primary" style="width:100%;" onclick="signup()">Join Community</button>
-        <button class="btn" style="background:none; color:var(--text-muted); width:100%; margin-top:10px;" onclick="login()">Log In</button>
+        <div style="border-bottom: 1px solid var(--border); margin-bottom: 25px; padding-bottom: 15px;">
+            <h2 id="upload-header" style="margin:0; font-size: 24px; color: #fff; letter-spacing: -0.5px;">Publish New Script</h2>
+            <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Fill out the details below to share your creation.</p>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div style="grid-column: span 2;">
+                <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; display: block; letter-spacing: 0.5px;">SCRIPT TITLE</label>
+                <input type="text" id="up-title" placeholder="e.g. Universal Aimbot v2" style="width: 100%; background: #0a0a0a; border: 1px solid #222; border-radius: 10px; padding: 12px; color: #fff;">
+            </div>
+            
+            <div>
+                <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; display: block;">KEY SYSTEM</label>
+                <select id="up-key" style="width: 100%; background: #0a0a0a; border: 1px solid #222; border-radius: 10px; padding: 12px; color: #fff;">
+                    <option value="Keyless">Keyless (Recommended)</option>
+                    <option value="Key System">Key System Required</option>
+                </select>
+            </div>
+
+            <div>
+                <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; display: block;">PRICING</label>
+                <select id="up-payment" style="width: 100%; background: #0a0a0a; border: 1px solid #222; border-radius: 10px; padding: 12px; color: #fff;">
+                    <option value="Free">Free</option>
+                    <option value="Paid">Paid / Premium</option>
+                </select>
+            </div>
+
+            <div style="grid-column: span 2;">
+                <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; display: block;">ROBLOX GAME ID (OPTIONAL)</label>
+                <input type="text" id="up-gameid" placeholder="e.g. 155615604" style="width: 100%; background: #0a0a0a; border: 1px solid #222; border-radius: 10px; padding: 12px; color: #fff;">
+            </div>
+        </div>
+
+        <div style="margin: 25px 0;">
+            <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; display: block;">THUMBNAIL PREVIEW</label>
+            <div id="drop-zone" onclick="document.getElementById('up-thumb-file').click()" style="width: 100%; height: 180px; border: 2px dashed #333; border-radius: 14px; display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; position: relative; background: #070707; transition: 0.3s;">
+                <div id="upload-placeholder" style="text-align: center;">
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" style="margin-bottom: 10px;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                    <p style="color: var(--text-muted); font-size: 13px; margin: 0;">Recommended: 1280x720 (PNG/JPG)</p>
+                </div>
+                <img id="upload-img-preview" src="" style="display: none; width: 100%; height: 100%; object-fit: cover;">
+                <input type="file" id="up-thumb-file" accept="image/*" style="display: none;" onchange="previewUploadImage(this)">
+            </div>
+        </div>
+
+        <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; display: block;">SOURCE CODE (LUA)</label>
+        <textarea id="up-script" rows="10" placeholder="-- Paste your code here..." style="width: 100%; font-family: 'Fira Code', monospace; font-size: 13px; color: #79f2bd; background: #050505; border: 1px solid #222; border-radius: 12px; padding: 15px; resize: vertical;"></textarea>
+        
+        <div style="display: flex; gap: 15px; margin-top: 30px;">
+            <button id="upload-btn" class="btn btn-primary" style="flex: 2; padding: 16px; border-radius: 12px; font-weight: 700; background: var(--primary); color: white; border: none; cursor: pointer;" onclick="savePost()">Publish Script</button>
+            <button class="btn" style="flex: 1; background: #1a1a1a; color: #fff; border: 1px solid #333; border-radius: 12px; cursor: pointer;" onclick="switchTab('feed')">Cancel</button>
+        </div>
     </div>
 </div>
 
@@ -327,13 +417,17 @@ const viewerId = currentUser || localStorage.getItem('guest_session');
         }, 3000);
     }
 
-    window.onload = () => {
-        if(currentUser) {
-            document.getElementById('section-auth').classList.add('hidden');
-            document.getElementById('logout-btn').classList.remove('hidden');
-            switchTab('feed');
-        }
-    };
+ window.onload = () => {
+    if (currentUser) {
+        // USER IS LOGGED IN
+        document.getElementById('logout-btn')?.classList.remove('hidden');
+        switchTab('feed');
+    } else {
+        // USER IS NOT LOGGED IN
+        // Force the UI to the login screen immediately
+        switchTab('auth');
+    }
+};
 
   function downloadScript() {
     // 1. Get the title and script from the modal UI instead of localStorage
@@ -386,19 +480,94 @@ const toBase64 = file => new Promise((resolve, reject) => {
     reader.onerror = error => reject(error);
 });
 
-   function switchTab(tabId, filter = 'recent') {
-    if(!currentUser && tabId !== 'feed') return pushNotif("Please login first", "danger");
+function switchTab(tabId, filter = 'recent') {
+    // 1. STRICT GATEKEEPER
+    // If not logged in, they are FORCED to stay on the auth page.
+    if (!currentUser) {
+        if (tabId !== 'auth') {
+            pushNotif("Please Login or Sign Up to access the community.", "warning");
+            // Switch them back to auth just in case, then STOP the function
+            tabId = 'auth'; 
+        }
+    }
+
+    // 2. THE RESETTER (Clears forms when reopening)
+    const sections = ['section-feed', 'section-auth', 'section-upload', 'section-your-posts'];
     
-    document.querySelectorAll('.container > div').forEach(d => d.classList.add('hidden'));
-    document.querySelectorAll('.tab-link').forEach(a => a.classList.remove('active'));
-    
-    document.getElementById(`section-${tabId}`).classList.remove('hidden');
-    
-    if(tabId === 'feed') {
-        // This ensures the correct tab button stays highlighted
-        const activeBtn = document.getElementById(`tab-${filter}`);
-        if(activeBtn) activeBtn.classList.add('active');
+    if (tabId === 'upload' || tabId === 'auth') {
+        const form = document.getElementById(`section-${tabId}`);
+        if (form) {
+            form.querySelectorAll('input, textarea').forEach(i => i.value = '');
+            
+            // Fix: Reset Dropdowns to default (Keyless/Free)
+            const selects = form.querySelectorAll('select');
+            selects.forEach(s => s.selectedIndex = 0);
+
+            if (tabId === 'upload') {
+                const previewImg = document.getElementById('upload-img-preview');
+                const placeholder = document.getElementById('upload-placeholder');
+                if (previewImg) {
+                    previewImg.src = '';
+                    previewImg.style.display = 'none';
+                    placeholder.style.display = 'block';
+                }
+            }
+        }
+    }
+
+    // 3. HIDE ALL & SHOW TARGET
+    sections.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.classList.add('hidden');
+            el.style.display = 'none'; // Ensure absolute hiding to prevent click blocking
+        }
+    });
+
+    const target = document.getElementById(`section-${tabId}`);
+    if (target) {
+        target.classList.remove('hidden');
+        
+        // Apply centering only to Auth and Upload
+        if (tabId === 'auth' || tabId === 'upload') {
+            target.style.display = 'flex';
+            target.style.alignItems = 'center';
+            target.style.justifyContent = 'center';
+            target.style.minHeight = 'calc(100vh - 80px)';
+        } else {
+            target.style.display = 'block';
+        }
+        
+        window.scrollTo(0, 0);
+    }
+
+    // 4. NAV UI RESET
+    document.querySelectorAll('.tab-link').forEach(a => {
+        a.classList.remove('active');
+        if(a.getAttribute('onclick')?.includes(`'${tabId}'`)) a.classList.add('active');
+    });
+
+    // 5. FEED LOGIC
+    if (tabId === 'feed' && currentUser) {
         renderFeed(filter);
+    }
+}
+
+function previewUploadImage(input) {
+    const preview = document.getElementById('upload-img-preview');
+    const placeholder = document.getElementById('upload-placeholder');
+    const dropZone = document.getElementById('drop-zone');
+
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            preview.style.display = 'block';
+            placeholder.style.display = 'none';
+            dropZone.style.borderStyle = 'solid';
+            dropZone.style.borderColor = 'var(--primary)';
+        }
+        reader.readAsDataURL(input.files[0]);
     }
 }
 
@@ -411,20 +580,38 @@ function signup() {
     const e = emailInput.value.trim().toLowerCase(); 
     const p = passInput.value.trim();
 
-    // --- THE FIX: STRICT BLOCKING ---
-    if (u === "" || u === null || u.length < 1) {
-        return pushNotif("Username cannot be empty!", "danger");
+    // --- 1. PROFANITY & GIBBERISH FILTER ---
+    const badWords = ['swear1', 'swear2', 'admin', 'moderator']; // Add words you want to block
+    const isBadUser = badWords.some(word => u.toLowerCase().includes(word));
+    
+    if (isBadUser) {
+        return pushNotif("This username is not allowed.", "danger");
     }
 
-    if (!e || !p) {
-        return pushNotif("Email and Password are required", "danger");
+    // --- 2. VALID EMAIL CHECK (No more "dfifjijit") ---
+    // This regex ensures it looks like name@domain.com
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(e)) {
+        return pushNotif("Please enter a valid email address.", "danger");
     }
 
-    if (u.length < 3) {
-        return pushNotif("Username is too short (min 3 chars)", "warning");
+    // --- 3. PASSWORD STRENGTH ---
+    if (p.length < 6) {
+        return pushNotif("Password must be at least 6 characters.", "warning");
     }
-    // --------------------------------
 
+    // --- 4. USERNAME RULES ---
+    if (u.length < 3 || u.length > 15) {
+        return pushNotif("Username must be 3-15 characters.", "warning");
+    }
+    
+    // Only allow letters, numbers, and underscores (no weird symbols)
+    const userRegex = /^[a-zA-Z0-9_]+$/;
+    if (!userRegex.test(u)) {
+        return pushNotif("Username can only contain letters, numbers, and underscores.", "danger");
+    }
+
+    // --- EXISTING LOGIC: DATABASE CHECK ---
     if (localStorage.getItem(`u_${e}`)) {
         return pushNotif("Account already exists!", "danger");
     }
@@ -436,53 +623,98 @@ function signup() {
     localStorage.setItem('session_user', e);
     localStorage.setItem('session_username', u);
     
-    pushNotif(`Account created: @${u}!`);
+    pushNotif(`Welcome, @${u}!`);
     setTimeout(() => { location.reload(); }, 800);
 }
 
+function togglePassword() {
+    // We target "password" because that is the ID in your HTML
+    const passInput = document.getElementById('password');
+    const eyeIcon = document.getElementById('eye-icon');
+
+    if (!passInput || !eyeIcon) {
+        console.error("Password input or eye icon not found!");
+        return;
+    }
+
+    if (passInput.type === 'password') {
+        passInput.type = 'text';
+        // Eye-off (Slash)
+        eyeIcon.innerHTML = `
+            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+            <line x1="1" y1="1" x2="23" y2="23"></line>
+        `;
+    } else {
+        passInput.type = 'password';
+        // Regular Eye
+        eyeIcon.innerHTML = `
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+        `;
+    }
+}
+
 function login() {
-    // 1. Get all three inputs from the login form
-    const uInput = document.getElementById('reg-username').value.trim(); // Username field
+    // 1. Get inputs
+    const uInput = document.getElementById('reg-username').value.trim();
     const eInput = document.getElementById('email').value.trim().toLowerCase();
     const pInput = document.getElementById('password').value.trim();
 
-    // 2. CHECK: Are any fields empty?
+    // 2. Strict empty check
     if (!uInput || !eInput || !pInput) {
-        return pushNotif("Username, Email, and Password are required to log in!", "warning");
+        return pushNotif("All fields are required to access your account.", "warning");
     }
 
-    // 3. Get the stored data based on the email
+    // 3. Email format check (Prevents trying to login with gibberish)
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(eInput)) {
+        return pushNotif("That doesn't look like a valid email.", "danger");
+    }
+
+    // 4. Retrieve account
     const storedData = localStorage.getItem(`u_${eInput}`);
 
-    // 4. CHECK: Does the account exist?
     if (!storedData) {
-        return pushNotif("Account not found. Check your email spelling!", "danger");
+        return pushNotif("No account linked to this email.", "danger");
     }
 
-    // 5. PARSE the data to check username and password
-    const user = JSON.parse(storedData);
+    // 5. Verify credentials
+    try {
+        const user = JSON.parse(storedData);
 
-    // 6. VALIDATION: Check if Username AND Password match
-    if (user.username === uInput && user.password === pInput) {
-        // SUCCESS
-        currentUser = eInput; 
-        localStorage.setItem('session_user', eInput); 
-        localStorage.setItem('session_username', user.username);
-        
-        pushNotif(`Access Granted. Welcome, @${user.username}!`, "success");
-        
-        setTimeout(() => {
-            location.reload();
-        }, 800);
-    } else { 
-        // FAIL: Either password or username is wrong
-        if (user.username !== uInput) {
-            pushNotif("Username does not match this email!", "danger");
-        } else {
-            pushNotif("Incorrect password!", "danger");
+        // Professional check: Case-insensitive username check is safer
+        const usernameMatches = user.username.toLowerCase() === uInput.toLowerCase();
+        const passwordMatches = user.password === pInput;
+
+        if (usernameMatches && passwordMatches) {
+            // LOGIN SUCCESS
+            currentUser = eInput; 
+            localStorage.setItem('session_user', eInput); 
+            localStorage.setItem('session_username', user.username);
+            
+            pushNotif(`Success! Welcome back, @${user.username}`, "success");
+            
+            setTimeout(() => {
+                location.reload();
+            }, 800);
+        } else { 
+            // LOGIN FAIL
+            if (!usernameMatches) {
+                pushNotif("Username does not match our records.", "danger");
+            } else {
+                pushNotif("Invalid password. Please try again.", "danger");
+            }
+            
+            // Optional: Clear password field on fail for security
+            document.getElementById('password').value = "";
         }
+    } catch (err) {
+        console.error("Login Error:", err);
+        pushNotif("An error occurred during login.", "danger");
     }
-}    function logout() {
+}
+
+   function logout() {
     // 1. Remove the session
     localStorage.removeItem('session_user');
     
@@ -691,7 +923,7 @@ async function savePost() {
 async function openPost(id) {
     activePostId = id;
     
-    // 1. Fetch the post directly from the Supabase cloud
+    // 1. FETCH FRESH DATA (Auto-refresh from Cloud)
     const { data: p, error } = await _supabase
         .from('posts')
         .select('*')
@@ -700,7 +932,7 @@ async function openPost(id) {
     
     if (error || !p) {
         console.error("Fetch error:", error);
-        return pushNotif("Post not found in cloud database", "danger");
+        return pushNotif("Post not found or cloud sync failed", "danger");
     }
 
     // 2. Global View Counter Logic
@@ -710,27 +942,26 @@ async function openPost(id) {
     if (!updatedViews.includes(viewer)) {
         updatedViews.push(viewer);
         
+        // Update database silently
         await _supabase
             .from('posts')
             .update({ views: updatedViews })
             .eq('id', id);
             
-        // Background refresh for the feed cards
+        // Background refresh for the feed cards behind the modal
         const activeTabEl = document.querySelector('.tab-link.active');
         renderFeed(activeTabEl ? activeTabEl.id.replace('tab-', '') : 'recent');
     }
 
-    // 3. Update the Modal UI
+    // 3. Update the Modal UI with Fresh Data
     document.getElementById('modal-title').innerText = p.title;
-    // Fallback to email prefix if 'author' name is missing
     document.getElementById('modal-author').innerText = `By @${p.author || p.authorEmail.split('@')[0]}`;
     
-    // If using a textarea for the script:
     const codeEl = document.getElementById('modal-code');
     if(codeEl.tagName === 'TEXTAREA') codeEl.value = p.script;
     else codeEl.innerText = p.script;
     
-    // Update stats counters
+    // Stats (Guarantees fresh likes/dislikes/views are shown)
     document.getElementById('modal-likes').innerText = p.likes ? p.likes.length : 0;
     document.getElementById('modal-dislikes').innerText = p.dislikes ? p.dislikes.length : 0;
     document.getElementById('modal-views').innerText = updatedViews.length;
@@ -749,73 +980,130 @@ async function openPost(id) {
     `;
 
     // 5. Interaction UI & Comments
-    updateInteractionUI(p);
+    updateInteractionUI(p); // Highlights Like/Dislike buttons based on fresh data
     renderComments(p.comments || [], p.authorEmail);
     
-    // Show the modal and prevent background scroll
+    // Show modal and prevent scroll
     document.getElementById('post-modal').classList.remove('hidden');
     document.body.style.overflow = 'hidden'; 
 }
 
- async function vote(type) {
-    if (!currentUser) return pushNotif("Please login to vote", "danger");
+// 1. Add this variable at the very top of your script file (Global Scope)
+let isVoting = false; 
 
-    // --- STEP 1: OPTIMISTIC UI (INSTANT) ---
+/**
+ * Handles liking/disliking with Optimistic UI updates and Alt-Account protection
+ * @param {number} type - 1 for Like, -1 for Dislike
+ */
+async function vote(type) {
+    // Basic Auth Check
+    if (!currentUser) return pushNotif("Please login to vote", "danger");
+    
+    // Prevent spam-clicks and race conditions between account switches
+    if (isVoting) return;
+
+    // --- STEP 1: UI SNAPSHOT (For Reverting on Error) ---
     const lBtn = document.getElementById('like-btn');
     const dBtn = document.getElementById('dislike-btn');
     const lCountEl = document.getElementById('modal-likes');
     const dCountEl = document.getElementById('modal-dislikes');
 
-    let curL = parseInt(lCountEl.innerText) || 0;
-    let curD = parseInt(dCountEl.innerText) || 0;
+    const oldL = parseInt(lCountEl.innerText) || 0;
+    const oldD = parseInt(dCountEl.innerText) || 0;
+    const wasLiked = lBtn.classList.contains('active-up');
+    const wasDisliked = dBtn.classList.contains('active-down');
 
-    // Instant Visual Change
-    if (type === 1) {
-        if (lBtn.classList.contains('active-up')) {
+    // Lock the function
+    isVoting = true;
+
+    // --- STEP 2: INSTANT VISUAL CHANGE (Optimistic UI) ---
+    if (type === 1) { // User clicked Like
+        if (wasLiked) {
             lBtn.classList.remove('active-up');
-            lCountEl.innerText = curL - 1;
+            lCountEl.innerText = Math.max(0, oldL - 1);
         } else {
             lBtn.classList.add('active-up');
-            lCountEl.innerText = curL + 1;
-            if (dBtn.classList.contains('active-down')) {
+            lCountEl.innerText = oldL + 1;
+            if (wasDisliked) {
                 dBtn.classList.remove('active-down');
-                dCountEl.innerText = Math.max(0, curD - 1);
+                dCountEl.innerText = Math.max(0, oldD - 1);
             }
         }
-    } else {
-        if (dBtn.classList.contains('active-down')) {
+    } else { // User clicked Dislike
+        if (wasDisliked) {
             dBtn.classList.remove('active-down');
-            dCountEl.innerText = curD - 1;
+            dCountEl.innerText = Math.max(0, oldD - 1);
         } else {
             dBtn.classList.add('active-down');
-            dCountEl.innerText = curD + 1;
-            if (lBtn.classList.contains('active-up')) {
+            dCountEl.innerText = oldD + 1;
+            if (wasLiked) {
                 lBtn.classList.remove('active-up');
-                lCountEl.innerText = Math.max(0, curL - 1);
+                lCountEl.innerText = Math.max(0, oldL - 1);
             }
         }
     }
 
-    // --- STEP 2: BACKGROUND SYNC (SILENT) ---
-    const { data: post } = await _supabase.from('posts').select('likes, dislikes').eq('id', activePostId).single();
-    if (!post) return;
+    // --- STEP 3: BACKGROUND SYNC ---
+    try {
+        // Capture the currentUser RIGHT NOW to ensure the alt-account is the one recorded
+        const votingUser = currentUser;
 
-    let upVotes = post.likes || [];
-    let downVotes = post.dislikes || [];
+        // Fetch fresh arrays from Supabase to prevent overwriting other people's votes
+        const { data: post, error: fetchError } = await _supabase
+            .from('posts')
+            .select('likes, dislikes')
+            .eq('id', activePostId)
+            .single();
 
-    if (type === 1) {
-        if (upVotes.includes(currentUser)) upVotes = upVotes.filter(u => u !== currentUser);
-        else { upVotes.push(currentUser); downVotes = downVotes.filter(u => u !== currentUser); }
-    } else {
-        if (downVotes.includes(currentUser)) downVotes = downVotes.filter(u => u !== currentUser);
-        else { downVotes.push(currentUser); upVotes = upVotes.filter(u => u !== currentUser); }
+        if (fetchError || !post) throw new Error("Sync failed");
+
+        let upVotes = post.likes || [];
+        let downVotes = post.dislikes || [];
+
+        if (type === 1) {
+            if (upVotes.includes(votingUser)) {
+                upVotes = upVotes.filter(u => u !== votingUser);
+            } else {
+                upVotes.push(votingUser);
+                downVotes = downVotes.filter(u => u !== votingUser);
+            }
+        } else {
+            if (downVotes.includes(votingUser)) {
+                downVotes = downVotes.filter(u => u !== votingUser);
+            } else {
+                downVotes.push(votingUser);
+                upVotes = upVotes.filter(u => u !== votingUser);
+            }
+        }
+
+        const { error: updateError } = await _supabase
+            .from('posts')
+            .update({ likes: upVotes, dislikes: downVotes })
+            .eq('id', activePostId);
+
+        if (updateError) throw updateError;
+
+        // Final UI Polish: Ensure counts match the DB exactly
+        lCountEl.innerText = upVotes.length;
+        dCountEl.innerText = downVotes.length;
+
+        // Refresh background feed quietly
+        const activeFilter = document.querySelector('.tab-link.active')?.id.replace('tab-', '') || 'recent';
+        renderFeed(activeFilter);
+
+    } catch (err) {
+        console.error("Voting Error:", err);
+        pushNotif("Voting failed. Try again.", "danger");
+
+        // --- STEP 4: REVERT ON FAILURE ---
+        lCountEl.innerText = oldL;
+        dCountEl.innerText = oldD;
+        lBtn.classList.toggle('active-up', wasLiked);
+        dBtn.classList.toggle('active-down', wasDisliked);
+    } finally {
+        // Unlock the function
+        isVoting = false;
     }
-
-    await _supabase.from('posts').update({ likes: upVotes, dislikes: downVotes }).eq('id', activePostId);
-    
-    // Refresh background feed quietly
-    const activeFilter = document.querySelector('.tab-link.active')?.id.replace('tab-', '') || 'recent';
-    renderFeed(activeFilter);
 }
 
 async function toggleFav() {
@@ -879,21 +1167,37 @@ async function toggleFav() {
     renderFeed(activeTab);
 }
 
- function updateInteractionUI(p) {
+ /**
+ * Synchronizes the button states (Like/Dislike/Favorite) with the fresh post data
+ * @param {Object} p - The fresh post object from Supabase
+ */
+function updateInteractionUI(p) {
     const favBtn = document.getElementById('fav-btn');
-    if (!favBtn) return;
+    const likeBtn = document.getElementById('like-btn');
+    const dislikeBtn = document.getElementById('dislike-btn');
 
+    // Ensure we are checking against the current active session
+    // If currentUser is null (logged out), these will all be false
     const isFav = (p.favorites || []).includes(currentUser);
-    
-    // Apply the yellow class if favorited
-    favBtn.classList.toggle('active-fav', isFav);
-    
-    // Set the correct text
-    favBtn.innerHTML = isFav ? `⭐ Favorite` : `⭐ Favorite`;
+    const isLiked = (p.likes || []).includes(currentUser);
+    const isDisliked = (p.dislikes || []).includes(currentUser);
 
-    // Also handle Likes/Dislikes
-    document.getElementById('like-btn').classList.toggle('active-up', (p.likes || []).includes(currentUser));
-    document.getElementById('dislike-btn').classList.toggle('active-down', (p.dislikes || []).includes(currentUser));
+    if (favBtn) {
+        favBtn.classList.toggle('active-fav', isFav);
+        favBtn.innerHTML = isFav ? `⭐ Favorited` : `⭐ Favorite`;
+    }
+
+    if (likeBtn) {
+        likeBtn.classList.toggle('active-up', isLiked);
+    }
+
+    if (dislikeBtn) {
+        dislikeBtn.classList.toggle('active-down', isDisliked);
+    }
+    
+    // Refresh the numbers too, so Alt acc sees "1" before they make it "2"
+    document.getElementById('modal-likes').innerText = (p.likes || []).length;
+    document.getElementById('modal-dislikes').innerText = (p.dislikes || []).length;
 }
 
 // Add this at the top of your script tag with your other global variables
@@ -977,75 +1281,102 @@ async function addComment() {
     pushNotif("Comment posted!");
 }
 
+/**
+ * Renders the comment section for a specific post
+ * @param {Array} comments - Array of comment objects from Supabase
+ * @param {string} ownerEmail - The email of the post creator (to show the crown)
+ */
 function renderComments(comments, ownerEmail) {
     const container = document.getElementById('comments-container');
     if (!container) return;
+    
+    // Clear current view
     container.innerHTML = '';
     
+    // 1. Handle Empty State
     if (!comments || comments.length === 0) {
-        container.innerHTML = '<p style="color:var(--text-muted); font-size:13px;">No comments yet.</p>';
+        container.innerHTML = '<p style="color:var(--text-muted); font-size:13px; text-align:center; padding:20px;">No comments yet. Be the first to speak!</p>';
         return;
     }
     
+    // 2. Sort and Render (Newest first)
     comments.slice().reverse().forEach(c => {
+        // PERMISSIONS & IDENTITY CHECKS
         const isMe = c.email === currentUser;
-        const canMod = isMe || (currentUser && ownerEmail === currentUser);
         const isAuthor = c.email === ownerEmail;
+        const canMod = isMe || (currentUser && ownerEmail === currentUser);
+
+        // Tags logic
+        const crownHtml = isAuthor ? `<span title="Post Owner" style="cursor:help; margin-left:4px; filter: drop-shadow(0 0 2px gold);">👑</span>` : '';
+        const youTagHtml = isMe ? `<span style="font-size: 10px; background: var(--primary); color: white; padding: 2px 6px; border-radius: 4px; margin-left: 6px; vertical-align: middle; font-weight: bold; letter-spacing: 0.5px;">YOU</span>` : '';
 
         container.innerHTML += `
-            <div class="comment" style="position: relative;">
+            <div class="comment" style="position: relative; padding: 15px; border-bottom: 1px solid #1e293b;">
                 <div class="comment-top">
                     <div class="comment-info">
-                        <span class="comment-user" style="color: ${isAuthor ? 'var(--warning)' : 'var(--primary-light)'}">
-                            @${c.user} ${isAuthor ? '<span title="Script Author">👑</span>' : ''}
+                        <span class="comment-user" style="font-weight: 600; color: ${isAuthor ? 'var(--warning)' : 'var(--primary-light)'}; display: flex; align-items: center;">
+                            @${c.user} ${crownHtml} ${youTagHtml}
                         </span>
-                        <span class="comment-date">
+                        
+                        <span class="comment-date" style="font-size: 11px; color: var(--text-muted); margin-left: 0; margin-top: 4px; display: block;">
                             ${timeAgo(c.date)} 
-                            ${c.isEdited ? '<span style="font-style: italic; opacity: 0.5; margin-left: 5px;">(Edited)</span>' : ''}
+                            ${c.isEdited ? '<span style="font-style: italic; opacity: 0.6; margin-left: 5px;">(Edited)</span>' : ''}
                         </span>
                     </div>
                 </div>
 
-                <div class="comment-body" id="text-${c.id}">${c.text}</div>
+                <div class="comment-body" id="text-${c.id}" style="margin-top: 8px; font-size: 14px; line-height: 1.5; color: #e2e8f0;">
+                    ${c.text}
+                </div>
 
                 <div id="edit-ctrl-${c.id}" class="hidden" style="margin-top: 10px;">
                     <input type="text" id="input-${c.id}" 
                         value="${c.text}" 
-                        style="margin:0; font-size:13px; padding: 10px; background: #020617; border: 1px solid var(--primary);">
-                    <div style="display:flex; gap:8px; margin-top:8px;">
-                        <button class="btn btn-primary" style="padding:4px 12px; font-size:11px;" onclick="saveCommentUpdate(${c.id})">Save</button>
-                        <button class="btn" style="padding:4px 12px; font-size:11px; background:#334155; color:white;" onclick="cancelCommentEdit(${c.id})">Cancel</button>
+                        style="width: 100%; margin: 0; font-size: 13px; padding: 10px; background: #020617; border: 1px solid var(--primary); border-radius: 4px; color: white;">
+                    <div style="display: flex; gap: 8px; margin-top: 8px;">
+                        <button class="btn btn-primary" style="padding: 4px 12px; font-size: 11px;" onclick="saveCommentUpdate(${c.id})">Save</button>
+                        <button class="btn" style="padding: 4px 12px; font-size: 11px; background: #334155; color: white;" onclick="cancelCommentEdit(${c.id})">Cancel</button>
                     </div>
                 </div>
 
                 ${canMod ? `
-                <div class="comment-menu-btn" style="position: absolute; top: 15px; right: 15px;">
-                    <button class="dropdown-btn" onclick="toggleDrop('c-drop-${c.id}')">⋮</button>
-                    <div id="c-drop-${c.id}" class="dropdown-menu" style="right:0; top: 35px;">
-                        ${isMe ? `<button onclick="editComment(${c.id})">Edit</button>` : ''}
-                        <button onclick="delComment(${c.id})" style="color:var(--danger)">Delete</button>
+                <div class="comment-menu-btn" style="position: absolute; top: 12px; right: 12px;">
+                    <button class="dropdown-btn" style="background:transparent; border:none; color:var(--text-muted); cursor:pointer; font-size:18px;" onclick="toggleDrop('c-drop-${c.id}')">⋮</button>
+                    <div id="c-drop-${c.id}" class="dropdown-menu" style="right: 0; top: 30px; min-width: 100px;">
+                        ${isMe ? `<button onclick="editComment(${c.id})" style="width:100%; text-align:left;">Edit</button>` : ''}
+                        <button onclick="delComment(${c.id})" style="width:100%; text-align:left; color: var(--danger)">Delete</button>
                     </div>
                 </div>` : ''}
             </div>`;
     });
 }
 
-   async function delComment(commentId) {
+   /**
+ * Deletes a specific comment from the cloud and refreshes the UI
+ * @param {number|string} commentId - The unique ID of the comment to remove
+ */
+async function delComment(commentId) {
+    if (!activePostId) return pushNotif("Error: Post ID not found", "danger");
+
     showConfirm(
         "Delete Comment?", 
         "Are you sure you want to remove this? This cannot be undone.", 
         async () => {
-            // 1. Fetch the latest comments from Supabase to ensure we have the current list
+            // 1. Fetch the latest comments from Supabase
             const { data: p, error: fetchError } = await _supabase
                 .from('posts')
                 .select('comments, authorEmail')
                 .eq('id', activePostId)
                 .single();
 
-            if (fetchError || !p) return pushNotif("Error syncing comments", "danger");
+            if (fetchError || !p) {
+                console.error("Sync Error:", fetchError);
+                return pushNotif("Error syncing comments", "danger");
+            }
 
             // 2. Filter out the comment by its ID
-            const updatedComments = p.comments.filter(c => c.id !== commentId);
+            // Using != instead of !== if commentId type varies (string vs number)
+            const updatedComments = (p.comments || []).filter(c => c.id != commentId);
 
             // 3. Update the cloud database
             const { error: updateError } = await _supabase
@@ -1054,12 +1385,18 @@ function renderComments(comments, ownerEmail) {
                 .eq('id', activePostId);
 
             if (updateError) {
-                console.error(updateError);
+                console.error("Cloud Update Error:", updateError);
                 pushNotif("Failed to delete from cloud", "danger");
             } else {
                 pushNotif("Comment removed", "success");
-                // 4. Update the UI directly
+                
+                // 4. AUTO-REFRESH UI
+                // We pass the fresh array and the authorEmail back to the renderer
                 renderComments(updatedComments, p.authorEmail);
+                
+                // 5. Update the comment count on the background feed card
+                const activeTab = document.querySelector('.tab-link.active')?.id.replace('tab-', '') || 'recent';
+                renderFeed(activeTab);
             }
         }
     );
@@ -1067,49 +1404,87 @@ function renderComments(comments, ownerEmail) {
 
 let isUpdatingComment = false; // Spam lock
 
+/**
+ * Toggles the UI into Edit Mode for a specific comment
+ * @param {number|string} commentId - The unique ID of the comment to edit
+ */
 function editComment(commentId) {
-    // 1. Close dropdown
+    // 1. Close dropdown menu
     const menu = document.getElementById(`c-drop-${commentId}`);
     if (menu) menu.classList.remove('active');
 
+    // 2. Identify elements
     const textEl = document.getElementById(`text-${commentId}`);
     const inputEl = document.getElementById(`input-${commentId}`);
     const ctrlEl = document.getElementById(`edit-ctrl-${commentId}`);
 
-    // 2. THE FIX: Force it to be blank every time they click edit
-    inputEl.value = ""; 
-    inputEl.placeholder = "Type new comment...";
+    // 3. THE FIX: Force it to be blank every time they click edit 
+    // instead of showing the old text.
+    if (inputEl) {
+        inputEl.value = ""; 
+        inputEl.placeholder = "Type new comment...";
+    }
 
-    // 3. Swap UI
-    textEl.classList.add('hidden');
-    ctrlEl.classList.remove('hidden');
+    // 4. Swap UI Visibility
+    if (textEl) textEl.classList.add('hidden');
+    if (ctrlEl) ctrlEl.classList.remove('hidden');
     
-    inputEl.focus();
+    // 5. UX: Immediately focus the input for the user
+    if (inputEl) inputEl.focus();
 }
 
+/**
+ * Cancels the edit mode and restores the original comment view
+ * @param {number|string} commentId - The unique ID of the comment
+ */
 function cancelCommentEdit(commentId) {
-    document.getElementById(`text-${commentId}`).classList.remove('hidden');
-    document.getElementById(`edit-ctrl-${commentId}`).classList.add('hidden');
-    // Clear it on cancel too just to be safe
-    document.getElementById(`input-${commentId}`).value = "";
+    const textEl = document.getElementById(`text-${commentId}`);
+    const ctrlEl = document.getElementById(`edit-ctrl-${commentId}`);
+    const inputEl = document.getElementById(`input-${commentId}`);
+
+    // 1. Restore the original text visibility
+    if (textEl) textEl.classList.remove('hidden');
+
+    // 2. Hide the edit controls (input and buttons)
+    if (ctrlEl) ctrlEl.classList.add('hidden');
+
+    // 3. THE FIX: Clear the input on cancel to prevent data ghosting 
+    // when the user re-opens the edit mode later.
+    if (inputEl) {
+        inputEl.value = "";
+    }
+
+    // 4. Safety: Ensure the dropdown menu is closed
+    const menu = document.getElementById(`c-drop-${commentId}`);
+    if (menu) menu.classList.remove('active');
 }
 
+/**
+ * Saves an edited comment to the cloud and refreshes the view
+ * @param {number|string} commentId - The ID of the comment being updated
+ */
 async function saveCommentUpdate(commentId) {
-    // 1. Anti-Spam Check
+    // 1. Pre-flight Checks
     if (isUpdatingComment) return;
+    if (!activePostId) return pushNotif("Error: Post reference lost", "danger");
 
     const inputEl = document.getElementById(`input-${commentId}`);
-    const newText = inputEl.value.trim();
+    const newText = inputEl?.value.trim();
 
     if (!newText) return pushNotif("Comment cannot be empty", "warning");
 
-    // 2. Lock and Show Loading
+    // 2. Lock and Show Loading State
     isUpdatingComment = true;
     const saveBtn = document.querySelector(`#edit-ctrl-${commentId} .btn-primary`);
-    const originalBtnText = saveBtn.innerText;
-    saveBtn.innerText = "Saving...";
+    const originalBtnText = saveBtn ? saveBtn.innerText : "Save";
+    
+    if (saveBtn) {
+        saveBtn.innerText = "Saving...";
+        saveBtn.disabled = true;
+    }
 
     try {
+        // 3. Fetch latest data to prevent overwriting other users' new comments
         const { data: p, error: fetchError } = await _supabase
             .from('posts')
             .select('comments, authorEmail')
@@ -1118,13 +1493,21 @@ async function saveCommentUpdate(commentId) {
 
         if (fetchError || !p) throw fetchError;
 
+        // 4. Update the specific comment in the local array
         const updatedComments = p.comments.map(c => {
-            if (c.id === commentId) {
-                return { ...c, text: newText, isEdited: true };
+            // Use == to handle potential string/number ID mismatches
+            if (c.id == commentId) {
+                return { 
+                    ...c, 
+                    text: newText, 
+                    isEdited: true, 
+                    lastEdited: new Date().toISOString() 
+                };
             }
             return c;
         });
 
+        // 5. Push the updated array back to Supabase
         const { error: updateError } = await _supabase
             .from('posts')
             .update({ comments: updatedComments })
@@ -1132,15 +1515,23 @@ async function saveCommentUpdate(commentId) {
 
         if (updateError) throw updateError;
 
-        pushNotif("Comment updated!");
+        // 6. Success: Notify and Re-render
+        pushNotif("Comment updated!", "success");
         renderComments(updatedComments, p.authorEmail);
 
     } catch (err) {
-        console.error(err);
+        console.error("Comment Update Error:", err);
         pushNotif("Error saving comment", "danger");
-        saveBtn.innerText = originalBtnText; // Re-enable if failed
+        
+        // Manual button reset if we caught an error before the finally block
+        if (saveBtn) saveBtn.innerText = originalBtnText;
     } finally {
+        // 7. Global Reset
         isUpdatingComment = false;
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerText = originalBtnText;
+        }
     }
 }
 
@@ -1162,32 +1553,90 @@ async function saveCommentUpdate(commentId) {
 
 let confirmCallback = null;
 
+/**
+ * Shows a custom confirmation modal with async handling
+ * @param {string} title - The header text for the modal
+ * @param {string} message - The body description
+ * @param {Function} onConfirm - The async function to run (e.g., deletePost logic)
+ */
 function showConfirm(title, message, onConfirm) {
+    const modal = document.getElementById('confirm-modal');
+    const confirmBtn = document.getElementById('confirm-yes-btn');
+    const cancelBtn = document.getElementById('confirm-no-btn'); // Assuming you have a cancel btn
+
+    // 1. Set the Text Content
     document.getElementById('confirm-title').innerText = title;
     document.getElementById('confirm-msg').innerText = message;
-    document.getElementById('confirm-modal').classList.remove('hidden');
     
-    // overwrite the previous function to prevent "ghost" deletions
-    document.getElementById('confirm-yes-btn').onclick = async () => {
-        // Change button state so user knows it's working
-        const btn = document.getElementById('confirm-yes-btn');
-        const originalText = btn.innerText;
-        btn.innerText = "Processing...";
-        btn.disabled = true;
+    // 2. Reveal the Modal
+    modal.classList.remove('hidden');
 
-        await onConfirm(); // Run the Supabase delete logic
+    // 3. Overwrite the click handler to prevent "ghost" executions from previous calls
+    confirmBtn.onclick = async () => {
+        // Change button state to "Loading"
+        const originalText = confirmBtn.innerText;
+        confirmBtn.innerText = "Processing...";
+        confirmBtn.disabled = true;
         
-        btn.innerText = originalText;
-        btn.disabled = false;
-        closeConfirm();
+        // Add a subtle style change to show it's working
+        confirmBtn.style.opacity = "0.7";
+        confirmBtn.style.cursor = "not-allowed";
+
+        try {
+            // Run the passed-in logic (Delete/Update/etc)
+            await onConfirm(); 
+        } catch (err) {
+            console.error("Action failed:", err);
+        } finally {
+            // Revert button state regardless of success or failure
+            confirmBtn.innerText = originalText;
+            confirmBtn.disabled = false;
+            confirmBtn.style.opacity = "1";
+            confirmBtn.style.cursor = "pointer";
+            
+            // Close the modal
+            closeConfirm();
+        }
     };
+
+    // 4. Ensure the Cancel button just closes the modal
+    if (cancelBtn) {
+        cancelBtn.onclick = () => closeConfirm();
+    }
 }
 
+// Helper to hide the modal
 function closeConfirm() {
     document.getElementById('confirm-modal').classList.add('hidden');
 }
 
-// Global Delete Function
+/**
+ * Hides the confirmation modal and resets UI states
+ */
+function closeConfirm() {
+    const modal = document.getElementById('confirm-modal');
+    const confirmBtn = document.getElementById('confirm-yes-btn');
+
+    // 1. Hide the modal container
+    modal.classList.add('hidden');
+
+    // 2. Safety Reset: Ensure the button is not stuck in a disabled state 
+    // if the modal was closed while a process was running
+    if (confirmBtn) {
+        confirmBtn.disabled = false;
+        confirmBtn.style.opacity = "1";
+        confirmBtn.style.cursor = "pointer";
+    }
+
+    // 3. Clear the callback reference to keep memory clean
+    confirmCallback = null;
+}
+
+/**
+ * Global Delete Function
+ * Deletes a post from Supabase and auto-refreshes the current feed view.
+ * @param {string|number} id - The unique ID of the post to delete.
+ */
 async function deletePost(id) {
     showConfirm(
         "Delete Post?", 
@@ -1204,18 +1653,32 @@ async function deletePost(id) {
                 return pushNotif("Failed to delete from cloud", "danger");
             }
 
-            // 2. UI Cleanup
+            // 2. UI Feedback
+            // Note: closeConfirm() is called automatically by your showConfirm logic,
+            // but we call pushNotif here to alert the user.
             pushNotif("Script Deleted Successfully", "danger");
-            closeConfirm();
             
-            // 3. Refresh the feed to show it's gone
-            const activeTab = document.querySelector('.tab-link.active').id.replace('tab-', '');
+            // 3. AUTO-REFRESH LOGIC
+            // Get the current active tab (e.g., 'recent', 'popular', 'my-posts')
+            const activeTabLink = document.querySelector('.tab-link.active');
+            
+            // Fallback to 'recent' if for some reason activeTabLink is null
+            const activeTab = activeTabLink 
+                ? activeTabLink.id.replace('tab-', '') 
+                : 'recent';
+
+            // Re-render the feed to show the item is gone
             renderFeed(activeTab);
         }
     );
 }
 
-  async function editPost(id) {
+/**
+ * Global Edit Function
+ * Fetches the most recent script data and populates the upload form.
+ * @param {string|number} id - The unique ID of the post to edit.
+ */
+async function editPost(id) {
     // 1. Show a quick notification so the user knows it's loading
     pushNotif("Loading script data...", "success");
 
@@ -1232,6 +1695,7 @@ async function deletePost(id) {
     }
 
     // 3. Fill the Upload Form with the Cloud Data
+    // Ensure you have a hidden input: <input type="hidden" id="edit-id">
     document.getElementById('edit-id').value = p.id;
     document.getElementById('up-title').value = p.title;
     document.getElementById('up-script').value = p.script;
@@ -1242,7 +1706,12 @@ async function deletePost(id) {
 
     // 4. Update the UI text to show we are in "Edit Mode"
     document.getElementById('upload-header').innerText = "Edit Script";
-    document.getElementById('upload-btn').innerText = "Update Global Script";
+    
+    const upBtn = document.getElementById('upload-btn');
+    upBtn.innerText = "Update Global Script";
+    
+    // Optional: Add a visual cue (color change) to the button so user knows they are editing
+    upBtn.style.background = "var(--success)"; 
 
     // 5. Switch to the upload tab
     switchTab('upload');
