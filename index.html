@@ -212,7 +212,19 @@ input[type="text"]#login-pass {
 </div>
 
 <nav>
-    <div class="logo-anim">EasyScript</div>
+    <div style="display: flex; align-items: center; gap: 20px;">
+        <div class="logo-anim">EasyScript</div>
+        
+        <div style="position: relative; display: flex; align-items: center;">
+            <svg style="position: absolute; left: 12px; width: 16px; height: 16px; color: var(--text-muted); pointer-events: none;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" id="search-input" placeholder="Search scripts..." oninput="renderFeed()" 
+                style="margin: 0; padding: 10px 15px 10px 38px; width: 200px; background: rgba(255,255,255,0.05); font-size: 13px;">
+        </div>
+    </div>
+
     <div class="nav-links">
         <a class="tab-link active" id="tab-recent" onclick="switchTab('feed', 'recent')">Home</a>
         <a class="tab-link" id="tab-favorites" onclick="switchTab('feed', 'favorites')">Favorites</a>
@@ -312,12 +324,8 @@ input[type="text"]#login-pass {
 </div>
 
     <div id="section-feed" class="hidden">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 30px;">
-            <h1 id="feed-title" style="margin:0; font-size: 24px;">Community Scripts</h1>
-            <input type="text" id="search-input" style="width: 250px; margin:0;" placeholder="Search..." oninput="renderFeed()">
-        </div>
-        <div class="script-grid" id="scriptGrid"></div>
-    </div>
+    <div class="script-grid" id="scriptGrid" style="margin-top: 20px;"></div>
+</div>
 
     <div id="section-upload" class="hidden">
         <div style="max-width: 700px; margin: auto; background: var(--bg-card); padding: 40px; border-radius: 24px; border: 1px solid var(--border);">
@@ -376,7 +384,7 @@ input[type="text"]#login-pass {
         
         <div style="display: flex; gap: 12px;">
             <button class="btn btn-primary" style="flex: 1; justify-content: center;" onclick="copyScript()">📋 Copy Script</button>
-            <button class="btn" style="flex: 1; justify-content: center; background: #334155; color: white;" onclick="downloadScript()">📥 Download .txt</button>
+            <button class="btn btn-primary" style="flex: 1; justify-content: center;" onclick="downloadScript()">📥 Download Script</button>
         </div>
 
         <div style="margin-top:40px;">
@@ -422,14 +430,17 @@ const viewerId = currentUser || localStorage.getItem('guest_session');
         }, 3000);
     }
 
- window.onload = () => {
+window.onload = () => {
+    const navLinks = document.querySelector('.nav-links');
+
     if (currentUser) {
         // USER IS LOGGED IN
+        if (navLinks) navLinks.classList.remove('hidden');
         document.getElementById('logout-btn')?.classList.remove('hidden');
         switchTab('feed');
     } else {
         // USER IS NOT LOGGED IN
-        // Force the UI to the login screen immediately
+        if (navLinks) navLinks.classList.add('hidden'); // This hides the tabs
         switchTab('auth');
     }
 };
@@ -486,25 +497,19 @@ const toBase64 = file => new Promise((resolve, reject) => {
 });
 
 function switchTab(tabId, filter = 'recent') {
-    // 1. STRICT GATEKEEPER
-    // If not logged in, they are FORCED to stay on the auth page.
+    // 1. SILENT GATEKEEPER
+    // If no user is logged in, overwrite the tabId to 'auth' automatically.
     if (!currentUser) {
-        if (tabId !== 'auth') {
-            pushNotif("Please Login or Sign Up to access the community.", "warning");
-            // Switch them back to auth just in case, then STOP the function
-            tabId = 'auth'; 
-        }
+        tabId = 'auth';
     }
 
-    // 2. THE RESETTER (Clears forms when reopening)
+    // 2. THE RESETTER
     const sections = ['section-feed', 'section-auth', 'section-upload', 'section-your-posts'];
     
     if (tabId === 'upload' || tabId === 'auth') {
         const form = document.getElementById(`section-${tabId}`);
         if (form) {
             form.querySelectorAll('input, textarea').forEach(i => i.value = '');
-            
-            // Fix: Reset Dropdowns to default (Keyless/Free)
             const selects = form.querySelectorAll('select');
             selects.forEach(s => s.selectedIndex = 0);
 
@@ -525,7 +530,7 @@ function switchTab(tabId, filter = 'recent') {
         const el = document.getElementById(id);
         if (el) {
             el.classList.add('hidden');
-            el.style.display = 'none'; // Ensure absolute hiding to prevent click blocking
+            el.style.display = 'none';
         }
     });
 
@@ -533,7 +538,6 @@ function switchTab(tabId, filter = 'recent') {
     if (target) {
         target.classList.remove('hidden');
         
-        // Apply centering only to Auth and Upload
         if (tabId === 'auth' || tabId === 'upload') {
             target.style.display = 'flex';
             target.style.alignItems = 'center';
@@ -549,6 +553,7 @@ function switchTab(tabId, filter = 'recent') {
     // 4. NAV UI RESET
     document.querySelectorAll('.tab-link').forEach(a => {
         a.classList.remove('active');
+        // Only mark active if the user is logged in or if it's the auth tab
         if(a.getAttribute('onclick')?.includes(`'${tabId}'`)) a.classList.add('active');
     });
 
