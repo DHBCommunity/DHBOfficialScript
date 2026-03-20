@@ -1,0 +1,9 @@
+-- GitHub file: secret_main_script.lua
+print("Access Granted! Welcome to DHB Official.")
+
+local function main()
+    -- Put all your actual game logic, UI, and hacks here
+    print("Script is now running...")
+end
+
+main()
