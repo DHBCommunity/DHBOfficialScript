@@ -1,5 +1,4 @@
 
-_G.Key = "TEAMDOYDABEST" 
 _G.DHB_Passed = true
 
 local _0x0013 = loadstring
