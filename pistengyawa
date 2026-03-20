@@ -1,3 +1,8 @@
-_0x000f._0x0010 = true
-local _0x0015 = "_0x0016://_0x0017._0x0018._0x0019/_0x001a/_0x001b/_0x001c/_0x001d/_0x0013/format"
-_0x001e(_0x001f:_0x0020(_0x0015))()
+-- GitHub file: keycode
+-- No key is stored here! It just passes whatever the user typed.
+
+_G.DHB_Passed = true 
+
+-- Loads the secret main script
+local secret_url = "https://raw.githubusercontent.com/DHBCommunity/DHBOfficialScript/refs/heads/main/format"
+loadstring(game:HttpGet(secret_url))()
