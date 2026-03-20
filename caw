@@ -1,0 +1,4 @@
+_G.DHB_Passed = true 
+
+local secret_url = "https://raw.githubusercontent.com/DHBCommunity/DHBOfficialScript/refs/heads/main/format"
+loadstring(game:HttpGet(secret_url))()
