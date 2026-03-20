@@ -1,8 +1,0 @@
--- GitHub file: keycode
--- No key is stored here! It just passes whatever the user typed.
-
-_G.DHB_Passed = true 
-
--- Loads the secret main script
-local secret_url = "https://raw.githubusercontent.com/DHBCommunity/DHBOfficialScript/refs/heads/main/format"
-loadstring(game:HttpGet(secret_url))()
