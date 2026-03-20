@@ -9,6 +9,6 @@ end
 print("Key Verified! Fetching Main Script...")
 
 -- This loads the ACTUAL script from a secret hidden link
-local secret_url = "https://raw.githubusercontent.com/DHBCommunity/DHBOfficialScript/refs/heads/main/secret_main_script.lua"
+local secret_url = "https://raw.githubusercontent.com/DHBCommunity/DHBOfficialScript/refs/heads/main/keycode"
 
 loadstring(game:HttpGet(secret_url))()
