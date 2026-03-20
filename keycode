@@ -1,14 +1,22 @@
 -- GitHub file: secret_main
 
--- ANTI-BYPASS CHECK
+-- 1. ANTI-BYPASS CHECK
 if not _G.DHB_Passed then
     game.Players.LocalPlayer:Kick("Bypass Detected: Use the official loader!")
     return
 end
 
--- Reset the handshake so it can't be reused easily
-_G.DHB_Passed = false 
+-- 2. THE SECRET KEY CHECK
+local correct_key = "TEAMDOYDABEST" -- The key is hidden here now!
 
+if _G.Key ~= correct_key then
+    warn("FAILED: Invalid Key provided.")
+    -- Optional: game.Players.LocalPlayer:Kick("Invalid Key!")
+    return 
+end
+
+-- 3. SUCCESS LOGIC
+_G.DHB_Passed = false 
 print("Access Granted! Loading DHB Official...")
 
 local function main()
