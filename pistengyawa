@@ -1,13 +1,8 @@
 -- GitHub file: keycode
-local correct_key = "TEAMDOYDABEST"
+-- No key is stored here! It just passes whatever the user typed.
 
-if _G.Key ~= correct_key then
-    warn("FAILED: Invalid Key.")
-    return 
-end
-
--- This "Handshake" tells the next script it's safe to run
 _G.DHB_Passed = true 
 
+-- Loads the secret main script
 local secret_url = "https://raw.githubusercontent.com/DHBCommunity/DHBOfficialScript/refs/heads/main/keycode"
 loadstring(game:HttpGet(secret_url))()
