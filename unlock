@@ -4,15 +4,24 @@ if not _G.DHB_Passed then
     return
 end
 
--- 2. INTERNAL KEY (Hardcoded here only)
-local correct_key = "TEAMDOYDABEST" 
+-- 2. THE SECRET KEY CHECK
+local correct_key = "TEAMDOYDABEST" -- The only place the real key is stored
+
+-- Compare what you typed (_G.Key) to the real one (correct_key)
+if _G.Key ~= correct_key then
+    warn("FAILED: Invalid Key provided.")
+    -- This stops the script from running if the key is wrong
+    return 
+end
 
 -- 3. SUCCESS LOGIC
-_G.DHB_Passed = false -- Security reset
+_G.DHB_Passed = false -- Reset bypass flag
+_G.Key = nil          -- Clear the key from memory for safety
+
 print("Access Granted! Loading DHB Official...")
 
 local function main()
-    -- Put your game features here
+    -- Your features here
     print("Main Script Running!")
 end
 
