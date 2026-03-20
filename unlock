@@ -18,11 +18,1477 @@ end
 _G.DHB_Passed = false -- Reset bypass flag
 _G.Key = nil          -- Clear the key from memory for safety
 
-print("Access Granted! Loading DHB Official...")
-
 local function main()
-    -- Your features here
-    print("Main Script Running!")
+   -- [[ ERIK JOSHUA C. ARNEDO - ULTIMATE 2D PHYSICS & CAMERA SUITE ]]
+-- Features: Max Zoom, Freecam, God, Ghost, Inf Jump, Fly
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Player = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+-- Core Module Import
+local PlayerMovement = require(Player.PlayerScripts.PlayerMovement)
+
+local Settings = {
+    GodMode = false,
+    GodModeV2 = false,
+    GhostMode = false,
+    InfJump = false,
+    FlyMode = false,
+    Freecam = false,
+    MaxZoom = false,
+    Magnet = false, 
+    NoAnim = false,
+    AntiCollect = false,
+    SpeedHack = false,
+    AntiKnockback = false,
+    AutoLeave = false,
+    SpeedMultiplier = 0.4, -- The default value you requested
+    PingFake = false,
+    PingBuffer = {},
+    FlySpeed = 1.6,
+    FreecamSpeed = 1.2
+}
+
+local function checkMessage(message)
+    if not Settings.AutoLeave then return end
+    local lowerMsg = string.lower(message)
+    if string.find(lowerMsg, "nuked") or string.find(lowerMsg, "banned") then
+        game:GetService("ReplicatedStorage").Remotes.RequestPlayerExitWorld:InvokeServer()
+    end
+end
+
+game:GetService("TextChatService").MessageReceived:Connect(function(msg) checkMessage(msg.Text) end)
+game:GetService("LogService").MessageOut:Connect(function(msg) checkMessage(msg) end)
+
+-- [[ 1. PACKET HIJACKING - ULTIMATE PROTECT (UPDATED WITH PING FAKE) ]]
+local OldNamecall
+OldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+    local method = getnamecallmethod()
+    local args = {...}
+
+    -- [[ MOVEMENT PACKET INTERCEPT ]]
+    if self.Name == Player.Name and method == "FireServer" then
+        local parent = self.Parent
+        if parent and parent.Name == "PlayerMovementPackets" then
+            
+            -- ANTI-COLLECT & GHOST MODE (Priority: Deletes Packets)
+            if Settings.AntiCollect or Settings.GhostMode then
+                return nil
+            end
+            
+            -- PING FAKE (RUBBER BANDING)
+            if Settings.PingFake then
+                -- Store the packet instead of sending it
+                table.insert(Settings.PingBuffer, {Remote = self, Args = args})
+                
+                -- When buffer hits 15 packets, release the "burst"
+                if #Settings.PingBuffer >= 15 then
+                    for _, packet in ipairs(Settings.PingBuffer) do
+                        OldNamecall(packet.Remote, unpack(packet.Args))
+                    end
+                    Settings.PingBuffer = {} -- Clear buffer
+                end
+                
+                return nil -- Prevent the original single packet from sending
+            end
+        end
+    end
+
+    -- [[ GOD MODE BYPASS ]]
+    if (Settings.GodMode or Settings.GodModeV2) and self.Name == "PlayerHurtMe" and method == "FireServer" then 
+        warn("Erik: Damage Packet Blocked (" .. tostring(args[1]) .. ")")
+        return nil 
+    end
+
+    return OldNamecall(self, ...)
+end)
+
+-- [[ 2. ZOOM & FREECAM LOGIC - UPDATED ]]
+local FreecamPart = Instance.new("Part")
+FreecamPart.Transparency = 1
+FreecamPart.CanCollide = false
+FreecamPart.Anchored = true
+FreecamPart.Parent = workspace
+FreecamPart.Name = "FreecamAnchor"
+
+RunService.RenderStepped:Connect(function()
+    -- Max Zoom Toggle
+    if Settings.MaxZoom then
+        Player.CameraMaxZoomDistance = 100000
+    else
+        Player.CameraMaxZoomDistance = 128 
+    end
+    
+    -- Freecam Execution
+    if Settings.Freecam then
+        local moveVec = Vector3.new(0, 0, 0)
+        
+        -- Vertical Movement (Up/Down)
+        if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveVec = moveVec + Vector3.new(0, 1, 0) end
+        if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveVec = moveVec + Vector3.new(0, -1, 0) end
+        
+        -- Horizontal Movement (Left/Right)
+        -- Note: If your game uses the Z-axis for horizontal movement, change X to Z below.
+        if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveVec = moveVec + Vector3.new(-1, 0, 0) end
+        if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveVec = moveVec + Vector3.new(1, 0, 0) end
+        
+        -- Apply movement based on speed setting
+        if moveVec.Magnitude > 0 then
+            FreecamPart.Position = FreecamPart.Position + (moveVec.Unit * Settings.FreecamSpeed)
+        end
+        
+        Camera.CameraSubject = FreecamPart
+    else
+        -- Reset Camera to Player
+        local Character = Player.Character or workspace:FindFirstChild(Player.Name)
+        if Character then
+            Camera.CameraSubject = Character:FindFirstChild("Humanoid") or Character
+            
+            -- Sync FreecamPart to Player so it starts from the player's position when toggled ON
+            if Character:FindFirstChild("HumanoidRootPart") then
+                FreecamPart.Position = Character.HumanoidRootPart.Position
+            end
+        end
+    end
+end)
+
+-- [[ 3. MAIN PHYSICS LOOP - FORCE-FALL FIX & GOD V2 ]]
+RunService.Heartbeat:Connect(function()
+    if not PlayerMovement then return end
+
+    -- [[ GOD MODE V2 & NO KNOCKBACK ]]
+    if Settings.GodModeV2 then
+        PlayerMovement.Sensor = false -- Disable tile damage/physics
+        PlayerMovement.OnCollideBind = false -- Disable collision damage/knockback
+        
+        -- Health Reinforcement
+        local char = Player.Character
+        local hum = char and char:FindFirstChild("Humanoid")
+        if hum then
+            hum.Health = hum.MaxHealth
+        end
+    else
+        -- [[ CLEAN EFFECT - RESET WHEN OFF ]]
+        PlayerMovement.OnCollideBind = true 
+        
+        -- Only re-enable Sensor if Fly Mode isn't currently using it
+        if not Settings.FlyMode then
+            PlayerMovement.Sensor = true
+        end
+    end
+
+  -- [[ INFINITE JUMP - FIXED RESET ]]
+    if Settings.InfJump then
+        PlayerMovement.RemainingJumps = 999
+        PlayerMovement.MaxJump = 999
+    else
+        -- Restore default values when turned off
+        -- Usually, default MaxJump is 1 or 2 depending on the game
+        if PlayerMovement.MaxJump == 999 then
+            PlayerMovement.MaxJump = 1 
+            PlayerMovement.RemainingJumps = 0
+        end
+    end
+
+    -- [[ FLY MODE LOGIC ]]
+    if Settings.FlyMode then
+        local isHoldingJump = UserInputService:IsKeyDown(Enum.KeyCode.Space)
+        
+        if isHoldingJump then
+            -- ASCEND
+            PlayerMovement.Sensor = false 
+            PlayerMovement.VelocityY = Settings.FlySpeed
+            -- Boost lift
+            if not PlayerMovement.Grounded then
+                PlayerMovement.VelocityY = PlayerMovement.VelocityY + 0.38
+            end
+        else
+            -- FALL: Only re-enable sensor if God V2 is also OFF
+            if not Settings.GodModeV2 then
+                PlayerMovement.Sensor = true 
+            end
+            
+            -- THE FIX: Ensure VelocityY isn't stuck upward
+            if not PlayerMovement.Grounded and PlayerMovement.VelocityY > 0 then
+                PlayerMovement.VelocityY = 0 
+            end
+        end
+    else
+        -- Reset Sensor when Fly is OFF, provided God V2 is also OFF
+        if not Settings.GodModeV2 then
+            PlayerMovement.Sensor = true
+        end
+    end
+
+  -- [[ STABLE SPEED HACK BYPASS ]]
+if Settings.SpeedHack then
+    -- Use a small threshold (0.01) instead of 0 to account for floating point errors during lag
+    local isMoving = math.abs(PlayerMovement.MoveX) > 0.01
+    
+    -- Lagsafe Check: If the internal velocity is already high, keep pushing it
+    -- This ensures the speed doesn't "stutter" when your ping spikes
+    if isMoving or math.abs(PlayerMovement.VelocityX) > 1 then
+        
+        -- Normalize MoveX during lag: If MoveX is 0 due to lag but we have Velocity, 
+        -- we use the direction of the current Velocity to keep the boost consistent.
+        local direction = 0
+        if isMoving then
+            direction = PlayerMovement.MoveX
+        else
+            direction = (PlayerMovement.VelocityX > 0) and 1 or -1
+        end
+
+        -- Applying the bypass formula: (multiplier * 0.1)
+        -- Added math.clamp to prevent physics crashes during extreme lag spikes
+        local boost = direction * (Settings.SpeedMultiplier * 0.1)
+        PlayerMovement.VelocityX = PlayerMovement.VelocityX + boost
+    end
+end
+
+    -- [[ 6. ADVANCED ANTI-KNOCKBACK (FIXED) ]]
+    -- This runs independently and uses the 0.1 strict threshold
+    if Settings.AntiKnockback or Settings.GodModeV2 then
+        -- If we aren't pressing MoveX (idle), kill all Horizontal Velocity
+        if math.abs(PlayerMovement.MoveX) == 0 then
+            if math.abs(PlayerMovement.VelocityX) > 0.1 then
+                PlayerMovement.VelocityX = 0
+            end
+        end
+        
+        -- Kill all Vertical Velocity (Stops you from being launched up)
+        -- Only triggers if you aren't flying or jumping
+        if not Settings.FlyMode and not Settings.InfJump then
+            if PlayerMovement.VelocityY > 0.1 then
+                 PlayerMovement.VelocityY = 0
+            end
+        end
+    end
+end)
+
+local ScreenGui = Instance.new("ScreenGui", Player.PlayerGui)
+ScreenGui.Name = "CraftAWorldClient"
+ScreenGui.ResetOnSpawn = false
+
+local Main = Instance.new("Frame", ScreenGui)
+Main.Name = "MainFrame"
+Main.Position = UDim2.new(0.5, -95, 0.4, 0)
+Main.Size = UDim2.new(0, 190, 0, 280)
+Main.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+Main.BorderSizePixel = 0
+Main.Active = true
+Main.Draggable = true
+
+local Corner = Instance.new("UICorner", Main)
+Corner.CornerRadius = UDim.new(0, 10)
+
+local TweenService = game:GetService("TweenService")
+
+-- 1. Setup the Icon
+local MainIcon = Instance.new("ImageLabel", Main)
+MainIcon.Name = "MainIcon"
+MainIcon.Size = UDim2.new(0, 28, 0, 28) 
+MainIcon.Position = UDim2.new(0, 10, 0, 6)
+MainIcon.BackgroundTransparency = 1
+MainIcon.ScaleType = Enum.ScaleType.Fit
+
+-- 2. Icon Table
+local IconList = {
+    "rbxthumb://type=Asset&id=84894744927863&w=150&h=150",
+    "rbxthumb://type=Asset&id=10955300180&w=150&h=150",
+    "rbxthumb://type=Asset&id=113103683003277&w=150&h=150",
+    "rbxthumb://type=Asset&id=11886910029&w=150&h=150",
+}
+
+-- 3. Animation Configuration
+local expandedSize = UDim2.new(0, 32, 0, 32)
+local expandedPos = UDim2.new(0, 8, 0, 4)
+
+local breathTween = game:GetService("TweenService"):Create(MainIcon, TweenInfo.new(1.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {
+    Size = expandedSize,
+    Position = expandedPos
+})
+breathTween:Play()
+
+-- 4. Random Swapping Loop
+task.spawn(function()
+    local lastIndex = nil
+    
+    while true do
+        local randomIndex
+        
+        -- Pick a random index that isn't the same as the last one
+        repeat
+            randomIndex = math.random(1, #IconList)
+        until randomIndex ~= lastIndex
+        
+        lastIndex = randomIndex
+        MainIcon.Image = IconList[randomIndex]
+        
+        task.wait(1) -- Change every 1 second
+    end
+end)
+
+-- 2. Silver Animated Title
+local Title = Instance.new("TextLabel", Main)
+Title.Size = UDim2.new(1, -50, 0, 40)
+Title.Position = UDim2.new(0, 45, 0, 0) 
+Title.Text = "CRAFT A WORLD [CLIENT]"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 10.5
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.BackgroundTransparency = 1
+
+local Gradient = Instance.new("UIGradient", Title)
+Gradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(140, 140, 140)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(140, 140, 140))
+})
+
+local Underline = Instance.new("Frame", Main)
+Underline.Size = UDim2.new(1, -20, 0, 1)
+Underline.Position = UDim2.new(0, 10, 0, 35)
+Underline.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+Underline.BorderSizePixel = 0
+local UnderlineGrad = Gradient:Clone()
+UnderlineGrad.Parent = Underline
+
+task.spawn(function()
+    local info = TweenInfo.new(3, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1)
+    Gradient.Offset = Vector2.new(-1, 0)
+    UnderlineGrad.Offset = Vector2.new(-1, 0)
+    TweenService:Create(Gradient, info, {Offset = Vector2.new(1, 0)}):Play()
+    TweenService:Create(UnderlineGrad, info, {Offset = Vector2.new(1, 0)}):Play()
+end)
+
+-- Scrolling Container
+local ScrollFrame = Instance.new("ScrollingFrame", Main)
+ScrollFrame.Position = UDim2.new(0, 5, 0, 45)
+ScrollFrame.Size = UDim2.new(1, -10, 1, -55)
+ScrollFrame.BackgroundTransparency = 1
+ScrollFrame.ScrollBarThickness = 0 
+ScrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+
+local Grid = Instance.new("UIGridLayout", ScrollFrame)
+Grid.CellSize = UDim2.new(0, 87, 0, 55)
+Grid.CellPadding = UDim2.new(0, 6, 0, 6)
+Grid.HorizontalAlignment = Enum.HorizontalAlignment.Center
+
+local function CreateToggle(name, var)
+    local Frame = Instance.new("Frame", ScrollFrame)
+    Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 6)
+    
+    local Label = Instance.new("TextLabel", Frame)
+    Label.Size = UDim2.new(1, 0, 0, 24)
+    Label.Position = UDim2.new(0, 0, 0, 4)
+    Label.Text = name
+    Label.TextColor3 = Color3.fromRGB(180, 180, 180)
+    Label.Font = Enum.Font.GothamBold
+    Label.TextSize = 8
+    Label.TextWrapped = true
+    Label.BackgroundTransparency = 1
+
+    local Track = Instance.new("TextButton", Frame)
+    Track.Size = UDim2.new(0, 28, 0, 14)
+    Track.Position = UDim2.new(0.5, -14, 1, -18)
+    Track.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    Track.Text = ""
+    Track.AutoButtonColor = false
+    Instance.new("UICorner", Track).CornerRadius = UDim.new(1, 0)
+
+    local Knob = Instance.new("Frame", Track)
+    Knob.Size = UDim2.new(0, 10, 0, 10)
+    Knob.Position = UDim2.new(0, 2, 0.5, -5)
+    Knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    Instance.new("UICorner", Knob).CornerRadius = UDim.new(1, 0)
+
+    local function ToggleVisuals(state)
+        local goalPos = state and UDim2.new(1, -12, 0.5, -5) or UDim2.new(0, 2, 0.5, -5)
+        local goalCol = state and Color3.fromRGB(0, 255, 180) or Color3.fromRGB(45, 45, 45)
+        
+        TweenService:Create(Knob, TweenInfo.new(0.2), {Position = goalPos}):Play()
+        TweenService:Create(Track, TweenInfo.new(0.2), {BackgroundColor3 = goalCol}):Play()
+        TweenService:Create(Label, TweenInfo.new(0.2), {TextColor3 = state and Color3.new(1,1,1) or Color3.fromRGB(180,180,180)}):Play()
+    end
+
+    Track.MouseButton1Click:Connect(function()
+        if Settings[var] ~= nil then
+            Settings[var] = not Settings[var]
+            ToggleVisuals(Settings[var])
+        end
+    end)
+    
+    if Settings[var] then ToggleVisuals(true) end
+end
+
+-- Toggles
+CreateToggle("MAX-ZOOM", "MaxZoom")
+CreateToggle("FREECAM", "Freecam")
+CreateToggle("FLY-MODE", "FlyMode")
+CreateToggle("INF-JUMP", "InfJump")
+CreateToggle("FAKE-LAG", "PingFake")
+CreateToggle("NO-ANIMATION", "NoAnim")
+CreateToggle("GHOST-MODE", "GhostMode")
+CreateToggle("GOD-MODE", "GodMode")
+CreateToggle("GOD-MODE V2", "GodModeV2")
+CreateToggle("ANTI-COLLECT", "AntiCollect")
+CreateToggle("AUTO-COLLECT", "Magnet")
+CreateToggle("SPEED-HACK", "SpeedHack")
+CreateToggle("ANTI-KNOCKBACK", "AntiKnockback")
+CreateToggle("AUTO-LEAVE", "AutoLeave")
+
+-- [[ 5. PRECISION IMAGE CROSSHAIR & TELEPORT ]]
+local CrossGui = Instance.new("ScreenGui", Player.PlayerGui)
+CrossGui.Name = "ErikCustomCrosshair"
+CrossGui.IgnoreGuiInset = true -- Perfect alignment with mouse tip
+
+local Crosshair = Instance.new("ImageLabel", CrossGui)
+Crosshair.Name = "CustomDot"
+Crosshair.AnchorPoint = Vector2.new(0.6, 0.6) -- Centers image on the cursor
+Crosshair.Size = UDim2.new(0, 24, 0, 24) -- Standard crosshair size
+Crosshair.BackgroundTransparency = 1
+Crosshair.Image = "rbxassetid://6068096293" -- Your Asset ID
+Crosshair.ImageColor3 = Color3.fromRGB(255, 255, 255) -- Keeps default image colors
+Crosshair.Visible = false
+Crosshair.ZIndex = 10
+
+RunService.RenderStepped:Connect(function()
+    local isHoldingCtrl = UserInputService:IsKeyDown(Enum.KeyCode.LeftControl)
+    Crosshair.Visible = isHoldingCtrl
+    
+    if isHoldingCtrl then
+        local mousePos = UserInputService:GetMouseLocation()
+        -- Direct mapping to mouse position
+        Crosshair.Position = UDim2.new(0, mousePos.X, 0, mousePos.Y)
+    end
+end)
+
+UserInputService.InputBegan:Connect(function(input, processed)
+    if processed then return end
+    
+    if input.UserInputType == Enum.UserInputType.MouseButton1 and UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
+        local mousePos = UserInputService:GetMouseLocation()
+        local unitRay = Camera:ViewportPointToRay(mousePos.X, mousePos.Y)
+        
+        local rayParams = RaycastParams.new()
+        rayParams.FilterType = Enum.RaycastFilterType.Exclude
+        rayParams.FilterDescendantsInstances = {Player.Character, FreecamPart}
+        
+        local result = workspace:Raycast(unitRay.Origin, unitRay.Direction * 10000, rayParams)
+        
+        if result and PlayerMovement then
+            -- Teleport logic
+            PlayerMovement.Position = result.Position + Vector3.new(0, 3, 0)
+        end
+    end
+end)
+
+-- [[ 4. UPDATED MAGNET & AUTO-COLLECT LOGIC ]]
+local MovementRemote = game.ReplicatedStorage.Remotes.PlayerMovementPackets:WaitForChild(Player.Name)
+
+-- Configuration
+Settings.MagnetRange = 200
+
+-- Reusable Collection Function
+local function CollectItem(item)
+    if not Settings.Magnet or Settings.AntiCollect then return end
+    if not item:IsA("BasePart") or item:GetAttribute("t") then return end
+
+    local char = Player.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+
+    local distance = (root.Position - item.Position).Magnitude
+    if distance <= Settings.MagnetRange then
+        item:SetAttribute("t", true) -- Mark immediately to prevent double-collecting
+
+        task.spawn(function()
+            -- Visual Polish: Smoothly fly to player
+            item.CanCollide = false
+            item.Anchored = true
+            
+            local startPos = item.Position
+            local duration = 0.25 -- Faster flight (0.25s) for responsiveness
+            local startTick = tick()
+            
+            while tick() - startTick < duration do
+                -- Stop if item is destroyed or player toggles Anti-Collect
+                if not item or not item.Parent or not root or Settings.AntiCollect then break end
+                
+                local pc = (tick() - startTick) / duration
+                item.Position = startPos:Lerp(root.Position, pc)
+                RunService.Heartbeat:Wait()
+            end
+
+            -- Final Server Notification
+            if item and item.Parent and not Settings.AntiCollect then
+                MovementRemote:FireServer(Vector2.new(item.Position.X, item.Position.Y))
+            end
+        end)
+    end
+end
+
+-- [INSTANT LAYER] Listen for new items appearing
+for _, folderName in pairs({"Gems", "Drops"}) do
+    local folder = workspace:FindFirstChild(folderName)
+    if folder then
+        folder.ChildAdded:Connect(function(child)
+            if Settings.Magnet then
+                task.wait(0.05) -- Tiny delay to let the engine settle the new part
+                CollectItem(child)
+            end
+        end)
+    end
+end
+
+-- [SWEEP LAYER] Clean up items already on the ground
+task.spawn(function()
+    while true do
+        if Settings.Magnet and not Settings.AntiCollect then
+            local char = Player.Character
+            local root = char and char:FindFirstChild("HumanoidRootPart")
+            
+            if root then
+                local G = workspace:FindFirstChild("Gems")
+                local D = workspace:FindFirstChild("Drops")
+                local items = {}
+
+                if G then for _, v in pairs(G:GetChildren()) do table.insert(items, v) end end
+                if D then for _, v in pairs(D:GetChildren()) do table.insert(items, v) end end
+                
+                for _, item in pairs(items) do
+                    -- Exit loop immediately if settings change
+                    if not Settings.Magnet or Settings.AntiCollect then break end
+                    CollectItem(item)
+                end
+            end
+        end
+        task.wait(0.1) -- Fast polling (10 times per second)
+    end
+end)
+
+-- [[ NO ANIMATION LOGIC ]]
+RunService.Stepped:Connect(function()
+    if Settings.NoAnim then
+        local Character = Player.Character
+        local Animator = Character and Character:FindFirstChildOfClass("Humanoid") and Character.Humanoid:FindFirstChildOfClass("Animator")
+        if Animator then
+            for _, track in pairs(Animator:GetPlayingAnimationTracks()) do
+                track:Stop(0)
+            end
+        end
+    end
+end)
+
+--CALCULATOR--
+
+local Players = game:GetService("Players")
+local Player = Players.LocalPlayer or Players.PlayerAdded:Wait()
+local PlayerGui = Player:WaitForChild("PlayerGui")
+local TweenService = game:GetService("TweenService")
+
+-- Cleanup existing UI
+if PlayerGui:FindFirstChild("TaxCalculatorClient") then
+    PlayerGui.TaxCalculatorClient:Destroy()
+end
+
+-- State Persistence Variables
+local CurrentMode = "Tax"
+local savedTaxPerc = "5%"
+local savedTaxAmt = ""
+local savedAddVal = ""
+local isRecalced = false
+local originalAmount, originalTax = "", ""
+
+-- Main UI Setup
+local ScreenGui = Instance.new("ScreenGui", PlayerGui)
+ScreenGui.Name = "TaxCalculatorClient"
+ScreenGui.ResetOnSpawn = false
+
+local Main = Instance.new("Frame", ScreenGui)
+Main.Name = "MainFrame"
+Main.Position = UDim2.new(0.5, -95, 0.4, 0)
+Main.Size = UDim2.new(0, 190, 0, 310) 
+Main.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
+Main.BorderSizePixel = 0
+Main.Active = true
+Main.Draggable = true
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10)
+Instance.new("UIStroke", Main).Color = Color3.fromRGB(45, 45, 45)
+
+-- Animated Icon
+local MainIcon = Instance.new("ImageLabel", Main)
+MainIcon.Size = UDim2.new(0, 28, 0, 28) 
+MainIcon.Position = UDim2.new(0, 10, 0, 6)
+MainIcon.BackgroundTransparency = 1
+MainIcon.Image = "rbxthumb://type=Asset&id=6697723418&w=150&h=150"
+
+TweenService:Create(MainIcon, TweenInfo.new(1.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {
+    Size = UDim2.new(0, 32, 0, 32),
+    Position = UDim2.new(0, 8, 0, 4)
+}):Play()
+
+-- Title & Underline
+local Title = Instance.new("TextLabel", Main)
+Title.Size = UDim2.new(1, -50, 0, 40)
+Title.Position = UDim2.new(0, 45, 0, 0) 
+Title.Text = "TAX CALCULATOR [CSN]"
+Title.TextColor3 = Color3.new(1,1,1)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 10.5
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.BackgroundTransparency = 1
+
+local Underline = Instance.new("Frame", Main)
+Underline.Size = UDim2.new(1, -20, 0, 1)
+Underline.Position = UDim2.new(0, 10, 0, 35)
+Underline.BackgroundColor3 = Color3.new(1,1,1)
+Underline.BorderSizePixel = 0
+
+local Grad = Instance.new("UIGradient", Title)
+Grad.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(120, 120, 120)),
+    ColorSequenceKeypoint.new(0.5, Color3.new(1,1,1)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(120, 120, 120))
+})
+local UndGrad = Grad:Clone()
+UndGrad.Parent = Underline
+
+task.spawn(function()
+    while true do
+        TweenService:Create(Grad, TweenInfo.new(3, Enum.EasingStyle.Linear), {Offset = Vector2.new(1, 0)}):Play()
+        local t = TweenService:Create(UndGrad, TweenInfo.new(3, Enum.EasingStyle.Linear), {Offset = Vector2.new(1, 0)})
+        t:Play()
+        t.Completed:Wait()
+        Grad.Offset = Vector2.new(-1, 0)
+        UndGrad.Offset = Vector2.new(-1, 0)
+    end
+end)
+
+-- Tab System
+local TabFrame = Instance.new("Frame", Main)
+TabFrame.Size = UDim2.new(1, -20, 0, 22)
+TabFrame.Position = UDim2.new(0, 10, 0, 45)
+TabFrame.BackgroundTransparency = 1
+
+local function CreateTab(name, xPos)
+    local btn = Instance.new("TextButton", TabFrame)
+    btn.Size = UDim2.new(0.5, -3, 1, 0)
+    btn.Position = UDim2.new(xPos, 0, 0, 0)
+    btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    btn.Text = name
+    btn.TextColor3 = Color3.new(1,1,1)
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 9
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
+    return btn
+end
+
+local TaxTab = CreateTab("TAX", 0)
+local AddTab = CreateTab("ADDITION", 0.5)
+TaxTab.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+
+-- Inputs
+local TaxInput = Instance.new("TextBox", Main)
+TaxInput.Size = UDim2.new(1, -55, 0, 30)
+TaxInput.Position = UDim2.new(0, 10, 0, 75)
+TaxInput.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
+TaxInput.Text = "5%"
+TaxInput.TextColor3 = Color3.new(1,1,1)
+TaxInput.Font = Enum.Font.GothamBold
+TaxInput.TextSize = 12
+Instance.new("UICorner", TaxInput).CornerRadius = UDim.new(0, 6)
+Instance.new("UIStroke", TaxInput).Color = Color3.fromRGB(45, 45, 45)
+
+local DropBtn = Instance.new("TextButton", Main)
+DropBtn.Size = UDim2.new(0, 30, 0, 30)
+DropBtn.Position = UDim2.new(1, -40, 0, 75)
+DropBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+DropBtn.Text = "≡" 
+DropBtn.TextColor3 = Color3.new(1,1,1)
+DropBtn.TextSize = 18
+Instance.new("UICorner", DropBtn).CornerRadius = UDim.new(0, 6)
+
+local AmountInput = Instance.new("TextBox", Main)
+AmountInput.Size = UDim2.new(1, -20, 0, 30)
+AmountInput.Position = UDim2.new(0, 10, 0, 110)
+AmountInput.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
+AmountInput.PlaceholderText = "Amount"
+AmountInput.Text = ""
+AmountInput.TextColor3 = Color3.new(1,1,1)
+AmountInput.Font = Enum.Font.GothamBold
+Instance.new("UICorner", AmountInput).CornerRadius = UDim.new(0, 6)
+Instance.new("UIStroke", AmountInput).Color = Color3.fromRGB(45, 45, 45)
+
+local RecalcBtn = Instance.new("TextButton", Main)
+RecalcBtn.Size = UDim2.new(1, -20, 0, 24)
+RecalcBtn.Position = UDim2.new(0, 10, 0, 145)
+RecalcBtn.BackgroundColor3 = Color3.fromRGB(0, 220, 150)
+RecalcBtn.Text = "RECALC YOU GET (50%)"
+RecalcBtn.TextColor3 = Color3.fromRGB(15, 15, 15)
+RecalcBtn.Font = Enum.Font.GothamBold
+RecalcBtn.TextSize = 10
+Instance.new("UICorner", RecalcBtn).CornerRadius = UDim.new(0, 6)
+
+-- NEW: ADDITION TO TAX BUTTON
+local AddToTaxBtn = Instance.new("TextButton", Main)
+AddToTaxBtn.Size = UDim2.new(1, -20, 0, 24)
+AddToTaxBtn.Position = UDim2.new(0, 10, 0, 145)
+AddToTaxBtn.BackgroundColor3 = Color3.fromRGB(255, 160, 0)
+AddToTaxBtn.Text = "CALC TAX ON TOTAL"
+AddToTaxBtn.TextColor3 = Color3.fromRGB(15, 15, 15)
+AddToTaxBtn.Font = Enum.Font.GothamBold
+AddToTaxBtn.TextSize = 10
+AddToTaxBtn.Visible = false
+Instance.new("UICorner", AddToTaxBtn).CornerRadius = UDim.new(0, 6)
+
+-- Results Setup
+local ScrollFrame = Instance.new("ScrollingFrame", Main)
+ScrollFrame.Position = UDim2.new(0, 5, 0, 175)
+ScrollFrame.Size = UDim2.new(1, -10, 1, -185)
+ScrollFrame.BackgroundTransparency = 1
+ScrollFrame.ScrollBarThickness = 0 
+ScrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+
+local Grid = Instance.new("UIGridLayout", ScrollFrame)
+Grid.CellSize = UDim2.new(0, 87, 0, 55)
+Grid.CellPadding = UDim2.new(0, 6, 0, 6)
+Grid.HorizontalAlignment = Enum.HorizontalAlignment.Center
+
+local function CreateResultBox(name, iconId, color)
+    local Frame = Instance.new("Frame", ScrollFrame)
+    Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 6)
+    Instance.new("UIStroke", Frame).Color = Color3.fromRGB(40, 40, 40)
+
+    local Icon = Instance.new("ImageLabel", Frame)
+    Icon.Size = UDim2.new(0, 14, 0, 14)
+    Icon.Position = UDim2.new(0, 5, 0, 6)
+    Icon.BackgroundTransparency = 1
+    Icon.Image = "rbxassetid://" .. iconId
+    Icon.ImageColor3 = color
+
+    local Lbl = Instance.new("TextLabel", Frame)
+    Lbl.Size = UDim2.new(1, -25, 0, 15)
+    Lbl.Position = UDim2.new(0, 22, 0, 5)
+    Lbl.Text = name
+    Lbl.TextColor3 = Color3.fromRGB(180, 180, 180)
+    Lbl.Font = Enum.Font.GothamBold
+    Lbl.TextSize = 8
+    Lbl.BackgroundTransparency = 1
+    Lbl.TextXAlignment = Enum.TextXAlignment.Left
+
+    local ValDisp = Instance.new("TextLabel", Frame)
+    ValDisp.Size = UDim2.new(1, -10, 0, 20)
+    ValDisp.Position = UDim2.new(0, 5, 1, -22)
+    ValDisp.Text = "0"
+    ValDisp.TextColor3 = color
+    ValDisp.Font = Enum.Font.GothamBold
+    ValDisp.TextSize = 14
+    ValDisp.BackgroundTransparency = 1
+    ValDisp.TextXAlignment = Enum.TextXAlignment.Left
+
+    return ValDisp, Lbl, Icon, Frame
+end
+
+local YouValLabel, YouTitle, YouIcon, ResultBox1 = CreateResultBox("YOU EARN", "9314679815", Color3.fromRGB(0, 255, 180))
+local ThemValLabel, ThemTitle, ThemIcon, ResultBox2 = CreateResultBox("THEY EARN", "14833309043", Color3.fromRGB(255, 100, 100))
+
+-- Functions
+local function UpdateMath()
+    local cleanTax = TaxInput.Text:gsub("[^%d%.]", "")
+    local cleanAmt = AmountInput.Text:gsub("[^%d%.]", "")
+    local n1 = tonumber(cleanTax) or 0
+    local n2 = tonumber(cleanAmt) or 0
+    
+    if CurrentMode == "Tax" then
+        if n2 > 0 then
+            local taxValue = n2 * (n1 / 100)
+            YouValLabel.Text = tostring(math.floor(taxValue))
+            ThemValLabel.Text = tostring(math.floor(n2 - taxValue))
+        else
+            YouValLabel.Text = "0"; ThemValLabel.Text = "0"
+        end
+    else
+        YouValLabel.Text = tostring(n1 + n1)
+    end
+end
+
+-- Switching Logic Functions
+local function ShowTaxTab()
+    if CurrentMode == "Addition" then savedAddVal = TaxInput.Text end
+    CurrentMode = "Tax"
+    Title.Text = "TAX CALCULATOR [CSN]"
+    TaxTab.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    AddTab.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    AmountInput.Visible = true; DropBtn.Visible = true; RecalcBtn.Visible = true
+    AddToTaxBtn.Visible = false
+    ResultBox2.Visible = true
+    TaxInput.Text = savedTaxPerc
+    AmountInput.Text = savedTaxAmt
+    TaxInput.Size = UDim2.new(1, -55, 0, 30)
+    TaxInput.PlaceholderText = ""
+    YouTitle.Text = "YOU EARN"
+    YouIcon.Image = "rbxassetid://9314679815"
+    YouIcon.ImageColor3 = Color3.fromRGB(0, 255, 180)
+    YouValLabel.TextColor3 = Color3.fromRGB(0, 255, 180)
+    UpdateMath()
+end
+
+local function ShowAddTab()
+    if CurrentMode == "Tax" then 
+        savedTaxPerc = TaxInput.Text
+        savedTaxAmt = AmountInput.Text
+    end
+    CurrentMode = "Addition"
+    Title.Text = "ADDITION MODE"
+    AddTab.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    TaxTab.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    AmountInput.Visible = false; DropBtn.Visible = false; RecalcBtn.Visible = false
+    AddToTaxBtn.Visible = true
+    ResultBox2.Visible = false 
+    TaxInput.Text = savedAddVal
+    TaxInput.Size = UDim2.new(1, -20, 0, 30)
+    TaxInput.PlaceholderText = "Enter number to double"
+    YouTitle.Text = "TOTAL BALANCE"
+    YouIcon.Image = "rbxassetid://4974562710"
+    YouIcon.ImageColor3 = Color3.new(1,1,1)
+    UpdateMath()
+end
+
+TaxTab.MouseButton1Click:Connect(ShowTaxTab)
+AddTab.MouseButton1Click:Connect(ShowAddTab)
+
+-- Recalc Logic
+RecalcBtn.MouseButton1Click:Connect(function()
+    if not isRecalced then
+        originalAmount = AmountInput.Text
+        originalTax = TaxInput.Text
+        local val = tonumber(YouValLabel.Text) or 0
+        if val > 0 then
+            AmountInput.Text = tostring(val)
+            TaxInput.Text = "50%"
+            RecalcBtn.Text = "BACK TO ORIGINAL"
+            RecalcBtn.BackgroundColor3 = Color3.fromRGB(220, 80, 80)
+            isRecalced = true
+        end
+    else
+        AmountInput.Text = originalAmount
+        TaxInput.Text = originalTax
+        RecalcBtn.Text = "RECALC YOU GET (50%)"
+        RecalcBtn.BackgroundColor3 = Color3.fromRGB(0, 220, 150)
+        isRecalced = false
+    end
+    UpdateMath()
+end)
+
+-- ADD TO TAX LOGIC
+AddToTaxBtn.MouseButton1Click:Connect(function()
+    local totalVal = YouValLabel.Text
+    if tonumber(totalVal) and tonumber(totalVal) > 0 then
+        savedTaxAmt = totalVal -- Save the total as the new tax amount
+        ShowTaxTab() -- Switch tab
+    end
+end)
+
+-- Dropdown Logic
+local DropFrame = Instance.new("Frame", Main)
+DropFrame.Size = UDim2.new(0, 105, 0, 105)
+DropFrame.Position = UDim2.new(1, 10, 0, 75) 
+DropFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+DropFrame.Visible = false
+Instance.new("UICorner", DropFrame)
+Instance.new("UIStroke", DropFrame).Color = Color3.fromRGB(60, 60, 60)
+
+local DropGrid = Instance.new("UIGridLayout", DropFrame)
+DropGrid.CellSize = UDim2.new(0, 30, 0, 30)
+DropGrid.CellPadding = UDim2.new(0, 4, 0, 4)
+DropGrid.HorizontalAlignment = Enum.HorizontalAlignment.Center
+
+for _, val in pairs({5, 10, 20, 30, 40, 50}) do
+    local Opt = Instance.new("TextButton", DropFrame)
+    Opt.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    Opt.Text = val; Opt.TextColor3 = Color3.new(1,1,1)
+    Opt.Font = Enum.Font.GothamBold; Opt.TextSize = 11
+    Instance.new("UICorner", Opt)
+    Opt.MouseButton1Click:Connect(function()
+        TaxInput.Text = val .. "%"
+        UpdateMath()
+        DropFrame.Visible = false
+    end)
+end
+
+DropBtn.MouseButton1Click:Connect(function() DropFrame.Visible = not DropFrame.Visible end)
+
+-- Final Connections
+TaxInput:GetPropertyChangedSignal("Text"):Connect(UpdateMath)
+AmountInput:GetPropertyChangedSignal("Text"):Connect(UpdateMath)
+
+TaxInput.FocusLost:Connect(function()
+    local clean = TaxInput.Text:gsub("[^%d%.]", "")
+    if CurrentMode == "Tax" and clean ~= "" then 
+        TaxInput.Text = clean .. "%" 
+    else
+        TaxInput.Text = clean
+    end
+end)
+
+--CALCULATOR--
+
+--DROPPER--
+
+local TweenService = game:GetService("TweenService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+local CoreGui = game:GetService("CoreGui")
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+-- Game Modules
+local InvModule = require(ReplicatedStorage:WaitForChild("Modules"):WaitForChild("Inventory"))
+local ItemsManager = require(ReplicatedStorage:WaitForChild("Managers"):WaitForChild("ItemsManager"))
+
+-- Remotes
+local PlayerDropRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("PlayerDrop")
+local PromptEvent = ReplicatedStorage:WaitForChild("Managers"):WaitForChild("UIManager"):WaitForChild("UIPromptEvent")
+
+-- [[ Duplicate Cleanup ]] --
+if CoreGui:FindFirstChild("DropManagerCSN") then
+    CoreGui.DropManagerCSN:Destroy()
+end
+
+-- [[ Main UI Setup ]] --
+local ScreenGui = Instance.new("ScreenGui", CoreGui)
+ScreenGui.Name = "DropManagerCSN"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.IgnoreGuiInset = true -- Helps with positioning accuracy
+
+local Main = Instance.new("Frame", ScreenGui)
+Main.Name = "MainFrame"
+Main.Position = UDim2.new(0.5, -95, 0.4, 0)
+Main.Size = UDim2.new(0, 190, 0, 360) 
+Main.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
+Main.BorderSizePixel = 0
+Main.Active = true
+Main.Draggable = true
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10)
+Instance.new("UIStroke", Main).Color = Color3.fromRGB(45, 45, 45)
+
+-- Animated Icon
+local MainIcon = Instance.new("ImageLabel", Main)
+MainIcon.Size = UDim2.new(0, 28, 0, 28) 
+MainIcon.Position = UDim2.new(0, 10, 0, 6)
+MainIcon.BackgroundTransparency = 1
+MainIcon.Image = "rbxthumb://type=Asset&id=10820259764&w=150&h=150"
+
+TweenService:Create(MainIcon, TweenInfo.new(1.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {
+    Size = UDim2.new(0, 32, 0, 32),
+    Position = UDim2.new(0, 8, 0, 4)
+}):Play()
+
+-- Title
+local Title = Instance.new("TextLabel", Main)
+Title.Size = UDim2.new(1, -50, 0, 40)
+Title.Position = UDim2.new(0, 45, 0, 0) 
+Title.Text = "DROP MANAGER [CSN]"
+Title.TextColor3 = Color3.new(1,1,1)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 11 -- Integer size for clarity
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.BackgroundTransparency = 1
+Title.RichText = true
+
+local Underline = Instance.new("Frame", Main)
+Underline.Size = UDim2.new(1, -20, 0, 1)
+Underline.Position = UDim2.new(0, 10, 0, 35)
+Underline.BackgroundColor3 = Color3.new(1,1,1)
+Underline.BorderSizePixel = 0
+Underline.BackgroundTransparency = 0.8
+
+-- Inputs
+local ItemDisplay = Instance.new("TextBox", Main)
+ItemDisplay.Size = UDim2.new(1, -20, 0, 30)
+ItemDisplay.Position = UDim2.new(0, 10, 0, 45)
+ItemDisplay.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
+ItemDisplay.Text = "Holding: None"
+ItemDisplay.TextColor3 = Color3.fromRGB(255, 200, 0)
+ItemDisplay.Font = Enum.Font.GothamBold
+ItemDisplay.TextSize = 12
+ItemDisplay.ClearTextOnFocus = false
+ItemDisplay.TextEditable = false
+Instance.new("UICorner", ItemDisplay).CornerRadius = UDim.new(0, 6)
+Instance.new("UIStroke", ItemDisplay).Color = Color3.fromRGB(45, 45, 45)
+
+local AmountInput = Instance.new("TextBox", Main)
+AmountInput.Size = UDim2.new(1, -20, 0, 30)
+AmountInput.Position = UDim2.new(0, 10, 0, 80)
+AmountInput.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
+AmountInput.PlaceholderText = "Amount to Drop"
+AmountInput.Text = "1000"
+AmountInput.TextColor3 = Color3.new(1,1,1)
+AmountInput.Font = Enum.Font.GothamBold
+AmountInput.TextSize = 14
+Instance.new("UICorner", AmountInput).CornerRadius = UDim.new(0, 6)
+Instance.new("UIStroke", AmountInput).Color = Color3.fromRGB(45, 45, 45)
+
+local ToggleBtn = Instance.new("TextButton", Main)
+ToggleBtn.Size = UDim2.new(1, -20, 0, 30)
+ToggleBtn.Position = UDim2.new(0, 10, 0, 115)
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 220, 150)
+ToggleBtn.Text = "START MULTI-DROP"
+ToggleBtn.TextColor3 = Color3.fromRGB(15, 15, 15)
+ToggleBtn.Font = Enum.Font.GothamBold
+ToggleBtn.TextSize = 12
+Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 6)
+
+-- Results Grid
+local ScrollFrame = Instance.new("ScrollingFrame", Main)
+ScrollFrame.Position = UDim2.new(0, 5, 0, 155)
+ScrollFrame.Size = UDim2.new(1, -10, 1, -165)
+ScrollFrame.BackgroundTransparency = 1
+ScrollFrame.ScrollBarThickness = 0 
+ScrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+
+local Grid = Instance.new("UIGridLayout", ScrollFrame)
+Grid.CellSize = UDim2.new(1, -10, 0, 55) -- Full width rows look cleaner for text
+Grid.CellPadding = UDim2.new(0, 0, 0, 8)
+Grid.HorizontalAlignment = Enum.HorizontalAlignment.Center
+
+local function CreateResultBox(name, iconId, color)
+    local Frame = Instance.new("Frame", ScrollFrame)
+    Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 6)
+    Instance.new("UIStroke", Frame).Color = Color3.fromRGB(40, 40, 40)
+
+    local Icon = Instance.new("ImageLabel", Frame)
+    Icon.Size = UDim2.new(0, 18, 0, 18)
+    Icon.Position = UDim2.new(0, 10, 0, 8)
+    Icon.BackgroundTransparency = 1
+    Icon.Image = "rbxassetid://" .. iconId
+    Icon.ImageColor3 = color
+
+    local Lbl = Instance.new("TextLabel", Frame)
+    Lbl.Size = UDim2.new(1, -40, 0, 20)
+    Lbl.Position = UDim2.new(0, 35, 0, 8)
+    Lbl.Text = name
+    Lbl.TextColor3 = Color3.fromRGB(200, 200, 200)
+    Lbl.Font = Enum.Font.GothamBold
+    Lbl.TextSize = 10
+    Lbl.BackgroundTransparency = 1
+    Lbl.TextXAlignment = Enum.TextXAlignment.Left
+    Lbl.RichText = true
+
+    local ValDisp = Instance.new("TextLabel", Frame)
+    ValDisp.Size = UDim2.new(1, -40, 0, 20)
+    ValDisp.Position = UDim2.new(0, 35, 1, -25)
+    ValDisp.Text = "0"
+    ValDisp.TextColor3 = color
+    ValDisp.Font = Enum.Font.GothamBold
+    ValDisp.TextSize = 16
+    ValDisp.BackgroundTransparency = 1
+    ValDisp.TextXAlignment = Enum.TextXAlignment.Left
+    ValDisp.RichText = true
+
+    return ValDisp
+end
+
+-- Ordered so SESSION is in the middle (if grid is single column) 
+-- or logic follows: 1. INV, 2. SESSION, 3. REMAINING
+local HoldingVal = CreateResultBox("ITEM TOTAL", "6034287525", Color3.fromRGB(100, 200, 255))
+local DroppedVal = CreateResultBox("SESSION DROPPED", "6031225818", Color3.fromRGB(100, 255, 100))
+local RemainingVal = CreateResultBox("REMAINING NEEDED", "6023426926", Color3.fromRGB(255, 100, 100))
+
+--- [[ LOGIC CORE ]] ---
+
+local isDropping = false
+
+local function getTotalHoldingAmount(targetId)
+    local total = 0
+    if not targetId then return 0 end
+    for _, stack in pairs(InvModule.Stacks) do
+        if stack and stack.Id == targetId then
+            total = total + (stack.Amount or 0)
+        end
+    end
+    return total
+end
+
+local function forceCleanExit()
+    local PlacementHandler = LocalPlayer.PlayerScripts:FindFirstChild("PlacementHandler")
+    if PlacementHandler then 
+        PlacementHandler:SetAttribute("clickPlayer", nil) 
+    end
+    
+    local pUI = PlayerGui:FindFirstChild("UIPromptUI")
+    if pUI then
+        local closeBtn = pUI:FindFirstChild("CloseButton", true)
+        if closeBtn then
+            local getcon = getconnections or nil
+            if getcon then
+                for _, con in pairs(getcon(closeBtn.MouseButton1Click)) do con:Fire() end
+            end
+        end
+        pUI.Enabled = false
+    end
+end
+
+-- Monitor Item Name and Holding Amount
+task.spawn(function()
+    while Main and Main.Parent do
+        local selected = InvModule.SelectedHotbar
+        if typeof(selected) == "number" then
+            local stackIndices = InvModule.HotbarStacks[selected]
+            if stackIndices and stackIndices[1] then
+                local stack = InvModule.Stacks[stackIndices[1]]
+                if stack and stack.Id then
+                    local currentName = ItemsManager.GetName(stack.Id)
+                    ItemDisplay.Text = "Holding: " .. currentName
+                    HoldingVal.Text = tostring(getTotalHoldingAmount(stack.Id))
+                end
+            end
+        else
+            ItemDisplay.Text = "Holding: None"
+            HoldingVal.Text = "0"
+        end
+        task.wait(0.2)
+    end
+end)
+
+-- [[ UPDATED LOGIC CORE ]] --
+
+-- [[ ROCK-SOLID LOGIC CORE ]] --
+
+local isDropping = false
+local dropDebounce = false 
+
+ToggleBtn.MouseButton1Click:Connect(function()
+    if dropDebounce then return end 
+    
+    if isDropping then 
+        isDropping = false 
+        return 
+    end
+
+    local totalStr = AmountInput.Text:gsub(",", "")
+    local total = tonumber(totalStr)
+    if not total or total <= 0 then 
+        AmountInput.Text = "Invalid Amt"
+        task.wait(0.5)
+        AmountInput.Text = "1000"
+        return 
+    end
+
+    -- Identify target item from current selection
+    local selected = InvModule.SelectedHotbar
+    if typeof(selected) ~= "number" then return end
+    local stackIndices = InvModule.HotbarStacks[selected]
+    if not stackIndices or #stackIndices == 0 then return end
+    
+    local targetStack = InvModule.Stacks[stackIndices[1]]
+    if not targetStack or not targetStack.Id then return end
+    local targetItemId = targetStack.Id
+
+    isDropping = true
+    dropDebounce = true
+    ToggleBtn.Text = "CANCEL DROP"
+    ToggleBtn.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
+    task.wait(0.1)
+    dropDebounce = false
+
+    task.spawn(function()
+        local sessionDropped = 0
+        local remainingToDrop = total
+
+        while isDropping and remainingToDrop > 0 do
+            -- 1. Locate the item accurately
+            local currentSlot = nil
+            for i, stack in pairs(InvModule.Stacks) do
+                if stack and stack.Id == targetItemId and stack.Amount > 0 then
+                    currentSlot = i
+                    break
+                end
+            end
+
+            if not currentSlot then break end
+            
+            local inventoryTotal = getTotalHoldingAmount(targetItemId)
+            local chunk = math.min(remainingToDrop, 200, inventoryTotal)
+            if chunk <= 0 then break end
+
+            -- 2. Open Menu & Wait for UI Confirmation
+            PlayerDropRemote:FireServer(currentSlot)
+            
+            -- This loop ensures the UI is actually ready before we "Fire" the drop
+            local timeout = 0
+            repeat 
+                task.wait() 
+                timeout = timeout + 1
+            until PlayerGui:FindFirstChild("UIPromptUI") or timeout > 20
+            
+            if not isDropping then break end
+
+            -- 3. Execute Drop
+            local dropArgs = {
+                [1] = {
+                    ["ButtonAction"] = "drp",
+                    ["Inputs"] = { ["amt"] = tostring(chunk) }
+                }
+            }
+            PromptEvent:FireServer(unpack(dropArgs))
+            
+            -- 4. Verify & Update Stats
+            sessionDropped = sessionDropped + chunk
+            remainingToDrop = remainingToDrop - chunk
+            
+            RemainingVal.Text = tostring(math.max(0, remainingToDrop))
+            DroppedVal.Text = tostring(sessionDropped)
+            
+            -- 5. Reliable Cleanup
+            task.wait(0.05)
+            forceCleanExit()
+            
+            -- Crucial delay to let the server process the "Close" before we "Open" again
+            task.wait(0.18) 
+        end
+        
+        isDropping = false
+        ToggleBtn.Text = "START MULTI-DROP"
+        ToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 220, 150)
+        forceCleanExit()
+    end)
+end)
+
+--DROPPER--
+
+--SPAMMER--
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TextService = game:GetService("TextService")
+local TweenService = game:GetService("TweenService")
+local CoreGui = game:GetService("CoreGui") -- Using CoreGui as per your style
+
+-- // CONFIG //
+local Config = {
+    Enabled = false,
+    Message = "Hello",
+    SuffixIndex = 1,
+    Cooldown = 5,
+}
+
+local Suffixes = {"1","2","3","4","5","6","7","8","9","A","B","C","D","E","F","X","Y","Z"}
+
+-- // MAIN UI SETUP //
+local ScreenGui = Instance.new("ScreenGui", CoreGui)
+ScreenGui.Name = "SmartSpammerCSN"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.IgnoreGuiInset = true
+
+local Main = Instance.new("Frame", ScreenGui)
+Main.Name = "MainFrame"
+Main.Position = UDim2.new(0.5, -95, 0.4, 0)
+Main.Size = UDim2.new(0, 190, 0, 320) 
+Main.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
+Main.BorderSizePixel = 0
+Main.Active = true
+Main.Draggable = true
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10)
+Instance.new("UIStroke", Main).Color = Color3.fromRGB(45, 45, 45)
+
+-- // Animated Icon (Clock Tick Fix) //
+local MainIcon = Instance.new("ImageLabel", Main)
+MainIcon.Size = UDim2.new(0, 28, 0, 28) 
+MainIcon.Position = UDim2.new(0, 10, 0, 6)
+MainIcon.BackgroundTransparency = 1
+MainIcon.Image = "rbxthumb://type=Asset&id=4764219467&w=150&h=150"
+
+-- To make it "tick", we use a very fast transition (0.1s) every 1 second
+task.spawn(function()
+    while true do
+        -- Tick Big
+        TweenService:Create(MainIcon, TweenInfo.new(0.1, Enum.EasingStyle.Back), {
+            Size = UDim2.new(0, 32, 0, 32),
+            Position = UDim2.new(0, 8, 0, 4)
+        }):Play()
+        
+        task.wait(0.5) -- Duration of the "pulse"
+        
+        -- Tick Small
+        TweenService:Create(MainIcon, TweenInfo.new(0.1, Enum.EasingStyle.Quad), {
+            Size = UDim2.new(0, 28, 0, 28),
+            Position = UDim2.new(0, 10, 0, 6)
+        }):Play()
+        
+        task.wait(0.5) -- Wait for the next second
+    end
+end)
+
+-- Title
+local Title = Instance.new("TextLabel", Main)
+Title.Size = UDim2.new(1, -50, 0, 40)
+Title.Position = UDim2.new(0, 45, 0, 0) 
+Title.Text = "AUTO SPAMMER [CSN]"
+Title.TextColor3 = Color3.new(1,1,1)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 10
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.BackgroundTransparency = 1
+
+local Underline = Instance.new("Frame", Main)
+Underline.Size = UDim2.new(1, -20, 0, 1)
+Underline.Position = UDim2.new(0, 10, 0, 35)
+Underline.BackgroundColor3 = Color3.new(1,1,1)
+Underline.BorderSizePixel = 0
+Underline.BackgroundTransparency = 0.8
+
+-- Inputs
+local MsgInput = Instance.new("TextBox", Main)
+MsgInput.Size = UDim2.new(1, -20, 0, 30)
+MsgInput.Position = UDim2.new(0, 10, 0, 45)
+MsgInput.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
+MsgInput.Text = Config.Message
+MsgInput.TextColor3 = Color3.fromRGB(255, 200, 0)
+MsgInput.Font = Enum.Font.GothamBold
+MsgInput.TextSize = 12
+Instance.new("UICorner", MsgInput).CornerRadius = UDim.new(0, 6)
+Instance.new("UIStroke", MsgInput).Color = Color3.fromRGB(45, 45, 45)
+MsgInput.FocusLost:Connect(function() Config.Message = MsgInput.Text end)
+
+local TimerInput = Instance.new("TextBox", Main)
+TimerInput.Size = UDim2.new(1, -20, 0, 30)
+TimerInput.Position = UDim2.new(0, 10, 0, 80)
+TimerInput.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
+TimerInput.PlaceholderText = "Wait Time (sec)"
+TimerInput.Text = tostring(Config.Cooldown)
+TimerInput.TextColor3 = Color3.new(1,1,1)
+TimerInput.Font = Enum.Font.GothamBold
+TimerInput.TextSize = 14
+Instance.new("UICorner", TimerInput).CornerRadius = UDim.new(0, 6)
+Instance.new("UIStroke", TimerInput).Color = Color3.fromRGB(45, 45, 45)
+TimerInput.FocusLost:Connect(function() 
+    local v = tonumber(TimerInput.Text)
+    if v then Config.Cooldown = v else TimerInput.Text = tostring(Config.Cooldown) end
+end)
+
+local ToggleBtn = Instance.new("TextButton", Main)
+ToggleBtn.Size = UDim2.new(1, -20, 0, 30)
+ToggleBtn.Position = UDim2.new(0, 10, 0, 115)
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(150, 50, 50)
+ToggleBtn.Text = "START SPAMMER"
+ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleBtn.Font = Enum.Font.GothamBold
+ToggleBtn.TextSize = 12
+Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 6)
+
+-- Results/Indicator Section
+local ScrollFrame = Instance.new("ScrollingFrame", Main)
+ScrollFrame.Position = UDim2.new(0, 5, 0, 155)
+ScrollFrame.Size = UDim2.new(1, -10, 1, -165)
+ScrollFrame.BackgroundTransparency = 1
+ScrollFrame.ScrollBarThickness = 0 
+ScrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+
+local Grid = Instance.new("UIGridLayout", ScrollFrame)
+Grid.CellSize = UDim2.new(1, -10, 0, 55)
+Grid.CellPadding = UDim2.new(0, 0, 0, 8)
+Grid.HorizontalAlignment = Enum.HorizontalAlignment.Center
+
+local function CreateResultBox(name, iconId, color)
+    local Frame = Instance.new("Frame", ScrollFrame)
+    Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 6)
+    Instance.new("UIStroke", Frame).Color = Color3.fromRGB(40, 40, 40)
+
+    local Icon = Instance.new("ImageLabel", Frame)
+    Icon.Size = UDim2.new(0, 18, 0, 18)
+    Icon.Position = UDim2.new(0, 10, 0, 8)
+    Icon.BackgroundTransparency = 1
+    Icon.Image = "rbxassetid://" .. iconId
+    Icon.ImageColor3 = color
+
+    local Lbl = Instance.new("TextLabel", Frame)
+    Lbl.Size = UDim2.new(1, -40, 0, 20)
+    Lbl.Position = UDim2.new(0, 35, 0, 8)
+    Lbl.Text = name
+    Lbl.TextColor3 = Color3.fromRGB(200, 200, 200)
+    Lbl.Font = Enum.Font.GothamBold
+    Lbl.TextSize = 10
+    Lbl.BackgroundTransparency = 1
+    Lbl.TextXAlignment = Enum.TextXAlignment.Left
+
+    local ValDisp = Instance.new("TextLabel", Frame)
+    ValDisp.Size = UDim2.new(1, -40, 0, 20)
+    ValDisp.Position = UDim2.new(0, 35, 1, -25)
+    ValDisp.Text = "0"
+    ValDisp.TextColor3 = color
+    ValDisp.Font = Enum.Font.GothamBold
+    ValDisp.TextSize = 16
+    ValDisp.BackgroundTransparency = 1
+    ValDisp.TextXAlignment = Enum.TextXAlignment.Left
+
+    return ValDisp
+end
+
+local StatusVal = CreateResultBox("SPAMMER STATUS", "6034287525", Color3.fromRGB(100, 200, 255))
+local TimerVal = CreateResultBox("NEXT CHAT IN", "6031225818", Color3.fromRGB(100, 255, 100))
+
+-- // LOGIC //
+ToggleBtn.MouseButton1Click:Connect(function()
+    Config.Enabled = not Config.Enabled
+    ToggleBtn.Text = Config.Enabled and "STOP SPAMMER" or "START SPAMMER"
+    ToggleBtn.BackgroundColor3 = Config.Enabled and Color3.fromRGB(0, 220, 150) or Color3.fromRGB(150, 50, 50)
+    StatusVal.Text = Config.Enabled and "RUNNING" or "READY"
+    if not Config.Enabled then TimerVal.Text = "0s" end
+end)
+
+local function isTagged(text)
+    local success, result = pcall(function()
+        return TextService:FilterStringAsync(text, Players.LocalPlayer.UserId):GetNonChatStringForBroadcastAsync()
+    end)
+    return success and result:find("#")
+end
+
+task.spawn(function()
+    while true do
+        task.wait(0.1)
+        if Config.Enabled and Config.Message ~= "" then
+            if isTagged(Config.Message) then
+                Config.Enabled = false
+                StatusVal.Text = "TAGGED!"
+                StatusVal.TextColor3 = Color3.new(1, 0, 0)
+                ToggleBtn.Text = "START SPAMMER"
+                ToggleBtn.BackgroundColor3 = Color3.fromRGB(150, 50, 50)
+                continue
+            end
+
+            local s = Suffixes[Config.SuffixIndex]
+            local Remote = ReplicatedStorage:FindFirstChild("CB")
+            if Remote then
+                Remote:FireServer(Config.Message .. " [" .. s .. "]")
+            end
+
+            Config.SuffixIndex = (Config.SuffixIndex % #Suffixes) + 1
+            
+            local timeLeft = Config.Cooldown
+            while timeLeft > 0 and Config.Enabled do
+                TimerVal.Text = string.format("%.1fs", timeLeft)
+                task.wait(0.1)
+                timeLeft = timeLeft - 0.1
+            end
+            TimerVal.Text = "SENDING..."
+        end
+    end
+end)
+
+--SPAMMER--
+
+print("Erik's Suite: Freecam and Zoom Control Loaded.")
 end
 
 main()
