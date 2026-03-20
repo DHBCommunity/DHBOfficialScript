@@ -1,14 +1,13 @@
--- GitHub file: pistengyawa
+-- GitHub file: keycode
 local correct_key = "TEAMDOYDABEST"
 
 if _G.Key ~= correct_key then
-    warn("FAILED: Invalid Key provided.")
+    warn("FAILED: Invalid Key.")
     return 
 end
 
-print("Key Verified! Fetching Main Script...")
+-- This "Handshake" tells the next script it's safe to run
+_G.DHB_Passed = true 
 
--- This loads the ACTUAL script from a secret hidden link
 local secret_url = "https://raw.githubusercontent.com/DHBCommunity/DHBOfficialScript/refs/heads/main/keycode"
-
 loadstring(game:HttpGet(secret_url))()
