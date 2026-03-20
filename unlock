@@ -1,0 +1,19 @@
+-- 1. ANTI-BYPASS CHECK
+if not _G.DHB_Passed then
+    game.Players.LocalPlayer:Kick("Bypass Detected: Use the official loader!")
+    return
+end
+
+-- 2. INTERNAL KEY (Hardcoded here only)
+local correct_key = "TEAMDOYDABEST" 
+
+-- 3. SUCCESS LOGIC
+_G.DHB_Passed = false -- Security reset
+print("Access Granted! Loading DHB Official...")
+
+local function main()
+    -- Put your game features here
+    print("Main Script Running!")
+end
+
+main()
