@@ -1,1 +1,1 @@
-loadstring(game:HttpGet("https://vss.pandadevelopment.net/virtual/file/390080c9f34e49d2"))()
+loadstring(game:HttpGet('https://institutionio.vercel.app/backend?file=15c99b02-7bf3-4f81-b1ac-dc1cbc4c5982=unlockugb.lua'))()
