@@ -4,4 +4,5 @@ return {
 	{ Name = "Sensation Hub", Require = 'require(100263845596551)("username", ColorSequence.new(Color3.fromRGB(71, 148, 253), Color3.fromRGB(71, 253, 160)), "Standard")' },
 	{ Name = "Demogorgon Require", Require = 'require(90079465185110).load("username")' },
 	{ Name = "SW Hub", Require = 'require(113664442162478).SW("username")' },
+	{ Name = "Mr.bean Admin", Require = 'require(5492934148):Fire("XD","username")' },
 }
