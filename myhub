@@ -1,4 +1,7 @@
-{
-  { Name = "Script Name", Require = 'require(123456789)("username", ...)' },
-  { Name = "Another", Require = 'require(987654321)("username", ...)' },
+return {
+	{ Name = "Morph Hub", Require = 'require(124675875890869).load("username")' },
+	{ Name = "Springtrap Require", Require = 'require(89830906197559).load("username")' },
+	{ Name = "Sensation Hub", Require = 'require(100263845596551)("username", ColorSequence.new(Color3.fromRGB(71, 148, 253), Color3.fromRGB(71, 253, 160)), "Standard")' },
+	{ Name = "Demogorgon Require", Require = 'require(90079465185110).load("username")' },
+	{ Name = "SW Hub", Require = 'require(113664442162478).SW("username")' },
 }
