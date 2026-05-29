@@ -1,0 +1,4 @@
+{
+  { Name = "Script Name", Require = 'require(123456789)("username", ...)' },
+  { Name = "Another", Require = 'require(987654321)("username", ...)' },
+}
