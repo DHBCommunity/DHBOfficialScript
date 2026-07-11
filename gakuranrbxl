@@ -1,1 +1,1 @@
-loadstring(game:HttpGet('https://institutionio.vercel.app/backend?file=60975442-6508-434c-a5b2-1596f8ddad32=gakuranunlock.lua'))()
+loadstring(game:HttpGet("https://institutionio.vercel.app/backend?file=60975442-6508-434c-a5b2-1596f8ddad32=gakuranunlock.lua&t="..game:HttpGet("https://institutionio.vercel.app/token?id=60975442-6508-434c-a5b2-1596f8ddad32",true),true))()
