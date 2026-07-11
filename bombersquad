@@ -1,1 +1,1 @@
-loadstring(game:HttpGet('https://institutionio.vercel.app/backend?file=cf9d8605-a931-41b6-8e8a-38c6873fac37=bomberunlock.lua'))()
+loadstring(game:HttpGet("https://institutionio.vercel.app/backend?file=cf9d8605-a931-41b6-8e8a-38c6873fac37=bomberunlock.lua&t="..game:HttpGet("https://institutionio.vercel.app/token?id=cf9d8605-a931-41b6-8e8a-38c6873fac37",true),true))()
