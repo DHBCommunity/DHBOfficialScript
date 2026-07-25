@@ -1,1 +1,1 @@
-loadstring(game:HttpGet("https://institutionio.vercel.app/backend?file=ebb640ba-8a1b-412c-8c84-8b5154ec01bb=unlockugb.lua&t="..game:HttpGet("https://institutionio.vercel.app/token?id=ebb640ba-8a1b-412c-8c84-8b5154ec01bb",true),true))()
+loadstring(game:HttpGet("https://institutionio.apiscript.workers.dev/loader?id=538bda14-2a97-4b3c-9358-208aadf6bc74&name=unlockugb",true))()
