@@ -1,1 +1,1 @@
-loadstring(game:HttpGet("https://institutionio.vercel.app/backend?file=778009c9-0cd4-49a4-b689-6f84c25a41a9=ssunlock.lua&t="..game:HttpGet("https://institutionio.vercel.app/token?id=778009c9-0cd4-49a4-b689-6f84c25a41a9",true),true))()
+loadstring(game:HttpGet("https://institutionio.apiscript.workers.dev/loader?id=7f894d58-09a3-4bc5-806d-f90d6502da95&name=ssunlock",true))()
