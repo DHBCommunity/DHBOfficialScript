@@ -1,1 +1,1 @@
-loadstring(game:HttpGet("https://institutionio.apiscript.workers.dev/loader?id=c760f413-f12d-4522-9934-b6229b160df0&name=bomberunlock",true))()
+loadstring(game:HttpGet("https://institutionapi.vercel.app/get-script?id=89603ca5-59de-4646-a395-4ce6cd404057&name=bomberunlock",true))()
