@@ -1,1 +1,1 @@
-loadstring(game:HttpGet("https://institutionapi.vercel.app/get-script?id=876111bb-a4fa-440d-aa67-f646615bbb89&name=ssunlock",true))()
+loadstring(game:HttpGet("https://institutionapi.vercel.app/get-script?id=5a97609d-5281-4d02-9298-17cb68b66396&name=ssunlock",true))()
