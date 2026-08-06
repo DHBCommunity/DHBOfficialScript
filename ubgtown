@@ -1,1 +1,1 @@
-loadstring(game:HttpGet("https://institutionapi.vercel.app/get-script?id=98fbb634-218f-4610-8e37-70eaac35b4a3&name=unlockugb",true))()
+loadstring(game:HttpGet("https://institutionapi.vercel.app/get-script?id=2212f326-dc50-42c6-b723-857ce0b71f6d&name=unlockugb",true))()
