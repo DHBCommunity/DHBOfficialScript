@@ -1,0 +1,62 @@
+return {
+    particles = {
+        ["Overcharge"] = {
+            particleId        = "rbxassetid://8625703339",
+            particleColor     = ColorSequence.new({
+                ColorSequenceKeypoint.new(0,   Color3.fromRGB(255,255,255)),
+                ColorSequenceKeypoint.new(0.2, Color3.fromRGB(255,220,0)),
+                ColorSequenceKeypoint.new(1,   Color3.fromRGB(200,100,0)),
+            }),
+            particleSize      = NumberSequence.new({
+                NumberSequenceKeypoint.new(0,   0),
+                NumberSequenceKeypoint.new(0.2, 3.5),
+                NumberSequenceKeypoint.new(1,   0),
+            }),
+            particleSpeed     = NumberRange.new(15,30),
+            particleLifetime  = NumberRange.new(0.2,0.4),
+            particleEmitCount = 25,
+            particleLightEmit = 1,
+            particleDuration  = 0.15,
+        },
+        ["Star"] = {
+            particleId        = "rbxassetid://14834478801",
+            particleColor     = ColorSequence.new(Color3.fromRGB(255,230,50)),
+            particleSize      = NumberSequence.new({
+                NumberSequenceKeypoint.new(0,   1.8),
+                NumberSequenceKeypoint.new(0.5, 2.5),
+                NumberSequenceKeypoint.new(1,   0),
+            }),
+            particleSpeed     = NumberRange.new(8,18),
+            particleLifetime  = NumberRange.new(0.3,0.7),
+            particleEmitCount = 18,
+            particleLightEmit = 0.7,
+            particleDuration  = 0.25,
+        },
+        ["Explode"] = {
+            particleId        = "rbxassetid://8625703339",
+            particleColor     = ColorSequence.new({
+                ColorSequenceKeypoint.new(0,   Color3.fromRGB(255,255,255)),
+                ColorSequenceKeypoint.new(0.1, Color3.fromRGB(255,100,0)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(150,50,0)),
+                ColorSequenceKeypoint.new(1,   Color3.fromRGB(50,50,50)),
+            }),
+            particleSize      = NumberSequence.new({
+                NumberSequenceKeypoint.new(0,   1),
+                NumberSequenceKeypoint.new(0.3, 8),
+                NumberSequenceKeypoint.new(1,  10),
+            }),
+            particleSpeed     = NumberRange.new(5,45),
+            particleLifetime  = NumberRange.new(0.6,1.2),
+            particleEmitCount = 40,
+            particleLightEmit = 0.8,
+            particleDuration  = 0.2,
+        },
+    },
+    sounds = {
+        ["Plushy"]    = "rbxassetid://123244735335213",
+        ["Minecraft"] = "rbxassetid://133823475766637",
+        ["Critical"]  = "rbxassetid://96554718586763",
+        ["Silly"]     = "rbxassetid://95147755634882",
+        ["Hammer"]    = "rbxassetid://82243828236468",
+    }
+}
