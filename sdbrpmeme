@@ -1,0 +1,1 @@
+loadstring(game:HttpGet("https://institutionapi.vercel.app/get-script?id=630aa815-8071-492a-bf2e-a2def1072c96&name=sdbrpunlock",true))()
