@@ -1,1 +1,1 @@
-loadstring(game:HttpGet("https://institutionapi.vercel.app/get-script?id=90912dcb-c155-4d94-ac38-cf417eb2a9c3&name=gakuranunlock",true))()
+loadstring(game:HttpGet("https://institutioncloudfare.onrender.com/get-script?id=7ef48299-aae5-4dcf-b955-875df69aceea&name=gakuranunlock",true))()
