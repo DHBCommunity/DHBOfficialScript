@@ -1,1 +1,1 @@
-loadstring(game:HttpGet("https://institutionapi.vercel.app/get-script?id=630aa815-8071-492a-bf2e-a2def1072c96&name=sdbrpunlock",true))()
+loadstring(game:HttpGet("https://institutioncloudfare.onrender.com/get-script?id=89643ded-07ae-4070-b7ca-440ad1d4e79f&name=sdbrpunlock",true))()
